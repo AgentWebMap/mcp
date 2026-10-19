@@ -1,3 +1,5 @@
+<p align="center"><a href="https://agentwebmap.com"><img src="brand/logo.svg" alt="Agent Web Map" width="420"></a></p>
+
 # Agent Web Map MCP server
 
 [Agent Web Map](https://agentwebmap.com) is a directory of websites that publish [`llms.txt`](https://llmstxt.org/), validated and ranked by an authority score. This MCP server gives agents the same directory as tools: search it, look up a site's `llms.txt` and `llms-full.txt`, check or draft an `llms.txt`, and register and verify a site you control.
@@ -63,6 +65,14 @@ Verified owners are sorted first, reach the featured tier sooner, get a link in 
 ## REST
 
 Everything above is also a JSON API: https://agentwebmap.com/docs
+
+## Brand
+
+The logo and mark are in [`brand/`](brand/) (SVG and PNG). Use them to link to agentwebmap.com; verified owners can also embed the [status badge](https://agentwebmap.com/docs#badge).
+
+## Contact
+
+admin@agentwebmap.com
 
 ## License
 

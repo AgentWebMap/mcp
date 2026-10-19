@@ -2,8 +2,12 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.agentwebmap/agentwebmap",
   "description": "Directory of sites publishing llms.txt, ranked by authority: search, look up, register, verify.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "websiteUrl": "https://agentwebmap.com",
+  "repository": {
+    "url": "https://github.com/AgentWebMap/mcp",
+    "source": "github"
+  },
   "remotes": [
     {
       "type": "streamable-http",
