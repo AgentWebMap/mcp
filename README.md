@@ -67,7 +67,17 @@ Verified owners are sorted first, reach the featured tier sooner, get a link in 
 
 ## REST
 
-Everything above is also a JSON API: https://agentwebmap.com/docs
+Everything above is also a JSON API. Start with `GET https://agentwebmap.com/v1/resolve?q=<domain or topic>`; `GET https://agentwebmap.com/v1` lists the rest. Live docs: https://agentwebmap.com/docs
+
+## Docs and examples in this repository
+
+- [docs/api.md](docs/api.md): the full API reference
+- [docs/webhooks.md](docs/webhooks.md): owner alerts and watches, payloads, signature verification in Node and Python
+- [docs/agent-terms.md](docs/agent-terms.md): the terms-for-agents specification
+- [openapi.json](openapi.json): snapshot of the OpenAPI description (the live one is at https://agentwebmap.com/openapi.json)
+- [examples/](examples/): `resolve.sh`, `resolve.py`, `mcp-client.mjs` (a dependency-free MCP client), `verify-site.sh`, `watch.sh`
+
+Questions and ideas: [Discussions](https://github.com/AgentWebMap/mcp/discussions).
 
 ## Brand
 
