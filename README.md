@@ -1,4 +1,7 @@
-<p align="center"><a href="https://agentwebmap.com"><img src="brand/logo.svg" alt="Agent Web Map" width="420"></a></p>
+<p align="center"><a href="https://agentwebmap.com"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/logo-dark.svg">
+  <img src="brand/logo.svg" alt="Agent Web Map" width="420">
+</picture></a></p>
 
 # Agent Web Map MCP server
 
