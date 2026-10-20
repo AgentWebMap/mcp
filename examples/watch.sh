@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Watch a domain: get a signed JSON POST when its llms.txt changes or breaks.
-#   sh watch.sh stripe.com https://your-endpoint.example/hooks/agentwebmap
+#   sh watch.sh modelcontextprotocol.io https://your-endpoint.example/hooks/agentwebmap
 set -e
 curl -s -X POST https://agentwebmap.com/v1/watch \
   -H "content-type: application/json" \

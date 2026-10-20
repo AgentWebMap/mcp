@@ -1,0 +1,22 @@
+[
+  {"id":"stripe-webhooks","query":"stripe webhooks","expected":[{"host":"stripe.com","path":"webhooks?"}]},
+  {"id":"stripe-idempotency","query":"stripe idempotent requests","expected":[{"host":"stripe.com","path":"idempoten"}]},
+  {"id":"stripe-subscriptions","query":"stripe subscriptions","expected":[{"host":"stripe.com","path":"subscription"}]},
+  {"id":"cloudflare-bindings","query":"cloudflare workers bindings","expected":[{"host":"cloudflare.com","path":"binding"}]},
+  {"id":"cloudflare-kv","query":"cloudflare workers kv","expected":[{"host":"cloudflare.com","path":"(^|/)kv(/|$)|workers-kv"}]},
+  {"id":"cloudflare-r2","query":"cloudflare r2 object storage","expected":[{"host":"cloudflare.com","path":"(^|/)r2(/|$)"}]},
+  {"id":"supabase-rls","query":"supabase row level security","expected":[{"host":"supabase.com","path":"row-level-security|row_level_security|rls"}]},
+  {"id":"supabase-auth","query":"supabase authentication","expected":[{"host":"supabase.com","path":"(^|/)auth(/|$)"}]},
+  {"id":"vercel-environment","query":"vercel environment variables","expected":[{"host":"vercel.com","path":"environment-variable|environment_variable"}]},
+  {"id":"nextjs-caching","query":"nextjs caching","expected":[{"host":"nextjs.org","path":"cach"}]},
+  {"id":"nextjs-middleware","query":"nextjs middleware","expected":[{"host":"nextjs.org","path":"middleware|proxy"}]},
+  {"id":"prisma-transactions","query":"prisma transactions","expected":[{"host":"prisma.io","path":"transaction"}]},
+  {"id":"resend-webhooks","query":"resend webhooks","expected":[{"host":"resend.com","path":"webhook"}]},
+  {"id":"clerk-session","query":"clerk session tokens","expected":[{"host":"clerk.com","path":"session|token"}]},
+  {"id":"astro-routing","query":"astro routing","expected":[{"host":"astro.build","path":"routing"}]},
+  {"id":"openai-tools","query":"openai function calling","expected":[{"host":"openai.com","path":"function-calling|function_calling|tools"}]},
+  {"id":"anthropic-tools","query":"anthropic tool use","expected":[{"host":"anthropic.com","path":"tool"},{"host":"claude.com","path":"tool"}]},
+  {"id":"webhook-retries","query":"webhook retries","expected":[{"host":"stripe.com","path":"webhook"},{"host":"resend.com","path":"webhook|retr"},{"host":"svix.com","path":"retr|attempt|webhook"}]},
+  {"id":"database-pooling","query":"database connection pooling","expected":[{"host":"supabase.com","path":"connect|pool"},{"host":"prisma.io","path":"connect|pool"},{"host":"neon.tech","path":"pool"}]},
+  {"id":"durable-objects","query":"durable objects","expected":[{"host":"cloudflare.com","path":"durable-object"}]}
+]

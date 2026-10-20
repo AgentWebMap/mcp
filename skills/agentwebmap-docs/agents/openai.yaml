@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Web Map Docs"
+  short_description: "Find relevant documentation pages with source evidence"
+  default_prompt: "Use $agentwebmap-docs to find official documentation for my development task."

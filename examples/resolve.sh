@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
-# Best source for a domain or a topic, in one call.
-#   sh resolve.sh stripe.com
-#   sh resolve.sh "payments api"
-q=$(printf '%s' "$1" | sed 's/ /+/g')
-curl -s "https://agentwebmap.com/v1/resolve?q=$q"
+# Documentation sources for a domain or task, in one call.
+#   sh resolve.sh modelcontextprotocol.io
+#   sh resolve.sh "modelcontextprotocol authorization"
+set -eu
+q=${1:-modelcontextprotocol.io}
+base_url=${AGENTWEBMAP_BASE_URL:-https://agentwebmap.com}
+curl --silent --show-error --fail-with-body --get "${base_url%/}/v1/resolve" \
+  --data-urlencode "q=$q" \
+  --data-urlencode "detail=compact" \
+  --data-urlencode "limit=3" \
+  --data-urlencode "max_age=86400"

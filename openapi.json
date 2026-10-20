@@ -1,1 +1,5857 @@
-{"openapi":"3.1.0","info":{"title":"Agent Web Map API","version":"0.4.1","description":"Directory of websites publishing llms.txt, ranked by authority, with a free JSON API and MCP server for AI agents. Verify your site to rank first. Reads need no key. Owners get a key by verifying their domain. MCP server: https://agentwebmap.com/mcp","contact":{"email":"admin@agentwebmap.com"}},"servers":[{"url":"https://agentwebmap.com"}],"paths":{"/v1":{"get":{"operationId":"apiIndex","summary":"API root: every endpoint, the MCP server, the files and the limits","responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}}}}},"/v1/resolve":{"get":{"operationId":"resolve","summary":"Start here: best source for a domain or a topic, with what to read, terms for agents, health, alternatives","parameters":[{"name":"q","in":"query","required":true,"schema":{"type":"string"},"description":"A domain (example.com) or a topic (\"payments api\")"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Resolution"}}}},"404":{"description":"Nothing matched; the body suggests check/register or search"}}}},"/v1/watch":{"post":{"operationId":"watchDomain","summary":"Subscribe to a domain: signed JSON POSTs when its llms.txt changes or breaks","requestBody":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["domain","webhook_url"],"properties":{"domain":{"type":"string"},"webhook_url":{"type":"string"}}}}}},"responses":{"201":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Watch"}}}},"404":{"description":"Domain not in the directory"},"429":{"description":"Rate limited"}}}},"/v1/watch/{id}":{"delete":{"operationId":"unwatchDomain","summary":"Cancel a watch","security":[{"watchSecret":[]}],"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}},"401":{"description":"Bad secret"}}}},"/v1/watch/{id}/test":{"post":{"operationId":"testWatch","summary":"Send a test event to the watch webhook","security":[{"watchSecret":[]}],"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}}}}},"/v1/stats":{"get":{"operationId":"getStats","summary":"Directory-wide counts","responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Stats"}}}}}}},"/v1/domains":{"get":{"operationId":"listDomains","summary":"Ranked listing (verified first, then authority)","parameters":[{"name":"page","in":"query","schema":{"type":"integer","minimum":1,"default":1}},{"name":"per_page","in":"query","schema":{"type":"integer","minimum":1,"maximum":100,"default":50}},{"name":"include_unlisted","in":"query","schema":{"type":"boolean","default":false}},{"name":"verified","in":"query","schema":{"type":"boolean","default":false},"description":"Only domains whose owner has verified them"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Listing"}}}}}}},"/v1/search":{"get":{"operationId":"searchDomains","summary":"Full-text search over domain, title, summary, description, tags","parameters":[{"name":"q","in":"query","required":true,"schema":{"type":"string"}},{"name":"page","in":"query","schema":{"type":"integer","minimum":1,"default":1}},{"name":"per_page","in":"query","schema":{"type":"integer","minimum":1,"maximum":100,"default":50}},{"name":"include_unlisted","in":"query","schema":{"type":"boolean","default":false}},{"name":"verified","in":"query","schema":{"type":"boolean","default":false},"description":"Only domains whose owner has verified them"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Listing"}}}}}}},"/v1/domain/{domain}":{"get":{"operationId":"lookupDomain","summary":"Everything known about one domain","parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Domain"}}}},"404":{"description":"Not in the directory"}}}},"/v1/sites":{"post":{"operationId":"registerSite","summary":"Submit a domain for crawling; returns verification instructions","requestBody":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["domain"],"properties":{"domain":{"type":"string"}}}}}},"responses":{"200":{"description":"Already tracked","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Registration"}}}},"202":{"description":"Queued","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Registration"}}}},"429":{"description":"Rate limited"}}}},"/v1/sites/{domain}/verification":{"get":{"operationId":"verificationInstructions","summary":"Token and the four verification methods","parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Verification"}}}}}}},"/v1/sites/{domain}/verify":{"post":{"operationId":"verifySite","summary":"Check the four methods; on success returns the owner API key (shown once)","parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object","properties":{"verified":{"type":"boolean"},"via":{"type":"string"},"api_key":{"type":"string"},"badge":{"type":"object"}}}}}},"422":{"description":"Token not found yet"}}}},"/v1/sites/{domain}":{"patch":{"operationId":"updateSite","summary":"Owner: edit profile and notification channels","security":[{"apiKey":[]}],"parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/SiteUpdate"}}}},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Domain"}}}},"401":{"description":"Bad or missing API key"}}}},"/v1/sites/{domain}/stats":{"get":{"operationId":"siteStats","summary":"Owner: lookups, score history, notifications, badge","security":[{"apiKey":[]}],"parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}}}}},"/v1/sites/{domain}/recrawl":{"post":{"operationId":"recrawlSite","summary":"Owner: re-validate now (once per 10 minutes)","security":[{"apiKey":[]}],"parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Domain"}}}}}}},"/v1/sites/{domain}/notify/test":{"post":{"operationId":"testNotification","summary":"Owner: send a test event to the configured webhook/email","security":[{"apiKey":[]}],"parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}}}}},"/badge/{domain}.svg":{"get":{"operationId":"badge","summary":"SVG status badge","parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"image/svg+xml"}}}},"/v1/check/{domain}":{"get":{"operationId":"checkLlmsTxt","summary":"Validate a site's llms.txt: each check with what to fix, and a preview","parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}}}}},"/v1/generate/{domain}":{"get":{"operationId":"generateLlmsTxt","summary":"Draft an llms.txt from the site's homepage, sitemap and page titles (10-30 s)","parameters":[{"name":"domain","in":"path","required":true,"schema":{"type":"string"},"description":"Domain name, e.g. example.com"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object","properties":{"text":{"type":"string"}}}}}}}}},"/v1/map":{"get":{"operationId":"mapData","summary":"Valid, listed and verified sites per country (ISO 3166-1 alpha-2)","responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object"}}}}}}}},"components":{"securitySchemes":{"apiKey":{"type":"http","scheme":"bearer","description":"Owner API key from /verify"},"watchSecret":{"type":"http","scheme":"bearer","description":"The secret issued by POST /v1/watch"}},"schemas":{"AgentTerms":{"type":"object","description":"Owner-stated terms for automated use","properties":{"automated_access":{"type":"string","description":"one of welcome | limited | ask | not_allowed: may agents use the site automatically?"},"rate_limit":{"type":"string","description":"short text, e.g. \"60 requests/minute\""},"attribution":{"type":"string","description":"one of required | appreciated | none"},"attribution_text":{"type":"string","description":"how to credit the site (≤200 chars)"},"pricing":{"type":"string","description":"one of free | freemium | paid"},"pricing_url":{"type":"string","description":"where prices are published"},"terms_url":{"type":"string","description":"the full terms for automated use"},"notes":{"type":"string","description":"anything else an agent should know (≤500 chars)"}}},"Resolution":{"type":"object","properties":{"query":{"type":"string"},"mode":{"type":"string","enum":["domain","topic"]},"best":{"$ref":"#/components/schemas/Domain"},"read":{"type":"object"},"terms":{"$ref":"#/components/schemas/AgentTerms"},"health":{"type":"object"},"alternatives":{"type":"array","items":{"type":"object"}},"watch":{"type":"string"}}},"Watch":{"type":"object","properties":{"watch_id":{"type":"integer"},"domain":{"type":"string"},"webhook_url":{"type":"string"},"secret":{"type":"string"},"events":{"type":"array","items":{"type":"string"}},"delivery":{"type":"string"},"test":{"type":"string"},"unsubscribe":{"type":"string"}}},"Stats":{"type":"object","properties":{"domains_tracked":{"type":"integer"},"valid_llms_txt":{"type":"integer"},"listed":{"type":"integer"},"verified":{"type":"integer"},"with_llms_full_txt":{"type":"integer"},"pending":{"type":"integer"},"last_checked":{"type":["string","null"]}}},"Domain":{"type":"object","properties":{"domain":{"type":"string"},"status":{"type":"string","enum":["pending","valid","invalid","unreachable"]},"tier":{"type":["string","null"],"enum":["featured","listed","unlisted","rejected",null]},"authority":{"type":["integer","null"],"description":"0-100"},"verified":{"type":"boolean"},"verified_at":{"type":["string","null"]},"llms_txt":{"type":["string","null"]},"llms_full_txt":{"type":["string","null"]},"nested_llms_txt":{"type":"array","items":{"type":"string"}},"title":{"type":["string","null"]},"summary":{"type":["string","null"]},"description":{"type":["string","null"]},"tags":{"type":"array","items":{"type":"string"}},"contact":{"type":["string","null"]},"sections":{"type":["integer","null"]},"links":{"type":["integer","null"]},"rank":{"type":["integer","null"],"description":"Popularity rank, lower is better"},"registered_at":{"type":["string","null"]},"country":{"type":["string","null"],"description":"ISO 3166-1 alpha-2"},"agent_terms":{"$ref":"#/components/schemas/AgentTerms"},"first_seen":{"type":"string"},"last_checked":{"type":["string","null"]},"badge":{"type":"string"},"claim":{"type":"object","description":"Present on unverified domains: how to verify and what it buys"}}},"Listing":{"type":"object","properties":{"query":{"type":"string"},"page":{"type":"integer"},"per_page":{"type":"integer"},"total":{"type":"integer"},"results":{"type":"array","items":{"$ref":"#/components/schemas/Domain"}}}},"Verification":{"type":"object","properties":{"domain":{"type":"string"},"token":{"type":"string"},"verify_endpoint":{"type":"string"},"methods":{"type":"array","items":{"type":"object","properties":{"method":{"type":"string"},"description":{"type":"string"},"snippet":{"type":"string"}}}}}},"Registration":{"type":"object","properties":{"domain":{"type":"string"},"status":{"type":"string"},"queued":{"type":"boolean"},"lookup":{"type":"string"},"verification":{"$ref":"#/components/schemas/Verification"},"benefits":{"type":"array","items":{"type":"string"}}}},"SiteUpdate":{"type":"object","properties":{"description":{"type":["string","null"],"maxLength":500},"tags":{"type":"array","items":{"type":"string"},"maxItems":10},"nested_llms_txt":{"type":"array","items":{"type":"string"},"maxItems":20},"contact":{"type":["string","null"]},"agent_terms":{"$ref":"#/components/schemas/AgentTerms"},"webhook_url":{"type":["string","null"]},"notify_email":{"type":["string","null"]}}}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Agent Web Map API",
+    "version": "0.8.2",
+    "description": "AgentWebMap indexes websites publishing llms.txt and helps AI agents find publisher documentation through a free JSON API and MCP server, with source links, matching evidence, check dates and change notifications. Reads need no key. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
+    "contact": {
+      "email": "admin@agentwebmap.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://agentwebmap.com"
+    }
+  ],
+  "paths": {
+    "/v1": {
+      "get": {
+        "operationId": "apiIndex",
+        "summary": "API endpoints, discovery links and limits",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "version",
+                    "start_here",
+                    "mcp",
+                    "endpoints"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "start_here": {
+                      "type": "string"
+                    },
+                    "mcp": {
+                      "type": "object",
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        },
+                        "transport": {
+                          "type": "string"
+                        },
+                        "auth": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "endpoints": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/resolve": {
+      "get": {
+        "operationId": "resolve",
+        "summary": "Find publisher documentation for a domain or development task",
+        "description": "Inspect match strength and health before using sources. Excerpts are publisher link metadata, not fetched page contents. Weak matches are fallback candidates; no matches return best=null. Live refresh validates without changing the directory.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "A domain or task, e.g. modelcontextprotocol authorization"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "full"
+              ],
+              "default": "compact"
+            },
+            "description": "Compact consumer fields; full adds owner profile and claim instructions."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research"
+              ]
+            },
+            "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
+          },
+          {
+            "name": "capability",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          },
+          {
+            "name": "max_age",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2592000,
+              "default": 86400
+            },
+            "description": "Health age threshold in seconds; stale results remain visible and are marked."
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Validate the selected source live. Rate limited to 20 per 10 minutes per client, cached/coalesced for 60 seconds per domain."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 3
+            },
+            "description": "Maximum documentation sources"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resolution"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No matching source; inspect suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/NoMatch"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Publisher check failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watch": {
+      "post": {
+        "operationId": "watchDomain",
+        "summary": "Subscribe to signed change and breakage events",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "domain",
+                  "webhook_url"
+                ],
+                "properties": {
+                  "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 253
+                  },
+                  "webhook_url": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "pattern": "^https?://"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscribed; store the secret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Watch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Capacity reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watch/{id}": {
+      "delete": {
+        "operationId": "unwatchDomain",
+        "summary": "Cancel a watch",
+        "security": [
+          {
+            "watchSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unwatch"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watch/{id}/test": {
+      "post": {
+        "operationId": "testWatch",
+        "summary": "Send a test event to the watch webhook",
+        "security": [
+          {
+            "watchSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Watch inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stats": {
+      "get": {
+        "operationId": "getStats",
+        "summary": "Directory-wide counts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "summary": "Topic taxonomy, classified site counts and publisher-declared capabilities",
+        "description": "Counts cover featured/listed sites. Categories are inferred from publisher metadata and can overlap. Empty categories means unclassified. MCP capability requires an explicit publisher endpoint link; availability is not checked. Full domain detail includes category and capability evidence.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/domains": {
+      "get": {
+        "operationId": "listDomains",
+        "summary": "Ranked listing (verified first, then authority)",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          },
+          {
+            "name": "include_unlisted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Only domains whose owner has verified them"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "full"
+              ],
+              "default": "compact"
+            },
+            "description": "Compact consumer fields; full adds owner profile and claim instructions."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research"
+              ]
+            },
+            "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
+          },
+          {
+            "name": "capability",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/search": {
+      "get": {
+        "operationId": "searchDomains",
+        "summary": "Search domain and documentation metadata by task relevance",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          },
+          {
+            "name": "include_unlisted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Only domains whose owner has verified them"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "full"
+              ],
+              "default": "compact"
+            },
+            "description": "Compact consumer fields; full adds owner profile and claim instructions."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research"
+              ]
+            },
+            "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
+          },
+          {
+            "name": "capability",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/domain/{domain}": {
+      "get": {
+        "operationId": "lookupDomain",
+        "summary": "Domain sources, health timestamp and terms",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "full"
+              ],
+              "default": "compact"
+            },
+            "description": "Compact consumer fields; full adds owner profile and claim instructions."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Domain"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites": {
+      "post": {
+        "operationId": "registerSite",
+        "summary": "Submit a domain for crawling and get verification instructions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "domain"
+                ],
+                "properties": {
+                  "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 253
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already tracked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Capacity reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/verification": {
+      "get": {
+        "operationId": "verificationInstructions",
+        "summary": "Describe optional ownership management and accepted proof methods; no credentials issued",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Verification"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/claims": {
+      "post": {
+        "operationId": "beginOwnershipClaim",
+        "summary": "Start a fresh 30-minute ownership claim; keep the private secret and publish only its proof token",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Fresh challenge; private secret shown once",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimChallenge"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Capacity reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/verify": {
+      "post": {
+        "operationId": "verifySite",
+        "summary": "Consume a fresh requester-bound proof challenge and issue an owner key once",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimCredentials"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Fresh proof not found yet; retry before expiry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingVerification"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Publisher check failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Capacity reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/key": {
+      "post": {
+        "operationId": "rotateOwnerKey",
+        "summary": "Replace an owner key using the current key; invalidates previous keys, browser sessions and pending claims",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Store the new key; it is shown once",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerKey"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}": {
+      "patch": {
+        "operationId": "updateSite",
+        "summary": "Owner: edit profile, terms and notification channels",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatedSite"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/stats": {
+      "get": {
+        "operationId": "siteStats",
+        "summary": "Owner: lookup analytics, score history, notifications and badge",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteStats"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/recrawl": {
+      "post": {
+        "operationId": "recrawlSite",
+        "summary": "Owner: revalidate and update the directory (once per 10 minutes)",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Domain"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sites/{domain}/notify/test": {
+      "post": {
+        "operationId": "testNotification",
+        "summary": "Owner: send a test event to the configured webhook/email",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/badge/{domain}.svg": {
+      "get": {
+        "operationId": "badge",
+        "summary": "SVG status badge",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status badge",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/check/{domain}": {
+      "get": {
+        "operationId": "checkLlmsTxt",
+        "summary": "Validate llms.txt and report checks, health and preview",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Check"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/generate/{domain}": {
+      "get": {
+        "operationId": "generateLlmsTxt",
+        "summary": "Draft llms.txt from homepage, sitemap and page titles (10-30 s)",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Generated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Publisher check failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/map": {
+      "get": {
+        "operationId": "mapData",
+        "summary": "Valid, listed and verified sites per country",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "generated_at",
+                    "total",
+                    "countries"
+                  ],
+                  "properties": {
+                    "generated_at": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "countries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "country",
+                          "name",
+                          "valid"
+                        ],
+                        "properties": {
+                          "country": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "valid": {
+                            "type": "integer"
+                          },
+                          "listed": {
+                            "type": "integer"
+                          },
+                          "verified": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Owner API key from /verify"
+      },
+      "watchSecret": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Secret issued by POST /v1/watch"
+      }
+    },
+    "schemas": {
+      "AgentTerms": {
+        "type": "object",
+        "properties": {
+          "automated_access": {
+            "type": "string",
+            "enum": [
+              "welcome",
+              "limited",
+              "ask",
+              "not_allowed"
+            ]
+          },
+          "rate_limit": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "attribution": {
+            "type": "string",
+            "enum": [
+              "required",
+              "appreciated",
+              "none"
+            ]
+          },
+          "attribution_text": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "pricing": {
+            "type": "string",
+            "enum": [
+              "free",
+              "freemium",
+              "paid"
+            ]
+          },
+          "pricing_url": {
+            "type": "string"
+          },
+          "terms_url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "Domain": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "valid",
+              "invalid",
+              "unreachable"
+            ]
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "featured",
+              "listed",
+              "unlisted",
+              "rejected",
+              null
+            ]
+          },
+          "authority": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_txt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_full_txt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agent_terms": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "automated_access": {
+                    "type": "string",
+                    "enum": [
+                      "welcome",
+                      "limited",
+                      "ask",
+                      "not_allowed"
+                    ]
+                  },
+                  "rate_limit": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "attribution": {
+                    "type": "string",
+                    "enum": [
+                      "required",
+                      "appreciated",
+                      "none"
+                    ]
+                  },
+                  "attribution_text": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "pricing": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "freemium",
+                      "paid"
+                    ]
+                  },
+                  "pricing_url": {
+                    "type": "string"
+                  },
+                  "terms_url": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research"
+              ]
+            },
+            "maxItems": 5,
+            "uniqueItems": true,
+            "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "uniqueItems": true,
+            "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+          },
+          "verified_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nested_llms_txt": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contact": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sections": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rank": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "registered_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_seen": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "badge": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "object",
+            "properties": {
+              "hint": {
+                "type": "string"
+              },
+              "verification": {
+                "type": "string"
+              },
+              "verify": {
+                "type": "string"
+              },
+              "docs": {
+                "type": "string"
+              },
+              "mcp": {
+                "type": "string"
+              },
+              "benefits": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "hint",
+              "verification",
+              "verify",
+              "docs",
+              "mcp",
+              "benefits"
+            ],
+            "additionalProperties": false
+          },
+          "why": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "match_score": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "excerpt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "url"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "category_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "ai-ml",
+                    "developer-tools",
+                    "infrastructure",
+                    "data-analytics",
+                    "cybersecurity",
+                    "finance-payments",
+                    "ecommerce",
+                    "productivity",
+                    "marketing",
+                    "education",
+                    "healthcare",
+                    "media",
+                    "design",
+                    "gaming",
+                    "travel",
+                    "community",
+                    "legal",
+                    "recruiting-careers",
+                    "industrial-manufacturing",
+                    "real-estate",
+                    "arts-culture",
+                    "sports-fitness",
+                    "food-dining",
+                    "automotive",
+                    "government-public-services",
+                    "science-research"
+                  ]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Deterministic rule strength, not a calibrated probability."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "source": {
+                  "const": "publisher_metadata"
+                }
+              },
+              "required": [
+                "id",
+                "confidence",
+                "evidence",
+                "source"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "category_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "categorized_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capability_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "const": "mcp"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "status": {
+                  "const": "publisher_declared"
+                }
+              },
+              "required": [
+                "id",
+                "url",
+                "source_url",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "tier",
+          "authority",
+          "verified",
+          "title",
+          "summary",
+          "llms_txt",
+          "llms_full_txt",
+          "last_checked",
+          "agent_terms",
+          "categories",
+          "capabilities"
+        ],
+        "additionalProperties": false
+      },
+      "CompactDomain": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "valid",
+              "invalid",
+              "unreachable"
+            ]
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "featured",
+              "listed",
+              "unlisted",
+              "rejected",
+              null
+            ]
+          },
+          "authority": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_txt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_full_txt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agent_terms": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "automated_access": {
+                    "type": "string",
+                    "enum": [
+                      "welcome",
+                      "limited",
+                      "ask",
+                      "not_allowed"
+                    ]
+                  },
+                  "rate_limit": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "attribution": {
+                    "type": "string",
+                    "enum": [
+                      "required",
+                      "appreciated",
+                      "none"
+                    ]
+                  },
+                  "attribution_text": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "pricing": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "freemium",
+                      "paid"
+                    ]
+                  },
+                  "pricing_url": {
+                    "type": "string"
+                  },
+                  "terms_url": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research"
+              ]
+            },
+            "maxItems": 5,
+            "uniqueItems": true,
+            "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "uniqueItems": true,
+            "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "tier",
+          "authority",
+          "verified",
+          "title",
+          "summary",
+          "llms_txt",
+          "llms_full_txt",
+          "last_checked",
+          "agent_terms",
+          "categories",
+          "capabilities"
+        ],
+        "additionalProperties": false
+      },
+      "Listing": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "valid",
+                    "invalid",
+                    "unreachable"
+                  ]
+                },
+                "tier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "featured",
+                    "listed",
+                    "unlisted",
+                    "rejected",
+                    null
+                  ]
+                },
+                "authority": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_full_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "last_checked": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "agent_terms": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "automated_access": {
+                          "type": "string",
+                          "enum": [
+                            "welcome",
+                            "limited",
+                            "ask",
+                            "not_allowed"
+                          ]
+                        },
+                        "rate_limit": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "attribution": {
+                          "type": "string",
+                          "enum": [
+                            "required",
+                            "appreciated",
+                            "none"
+                          ]
+                        },
+                        "attribution_text": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "pricing": {
+                          "type": "string",
+                          "enum": [
+                            "free",
+                            "freemium",
+                            "paid"
+                          ]
+                        },
+                        "pricing_url": {
+                          "type": "string"
+                        },
+                        "terms_url": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "ai-ml",
+                      "developer-tools",
+                      "infrastructure",
+                      "data-analytics",
+                      "cybersecurity",
+                      "finance-payments",
+                      "ecommerce",
+                      "productivity",
+                      "marketing",
+                      "education",
+                      "healthcare",
+                      "media",
+                      "design",
+                      "gaming",
+                      "travel",
+                      "community",
+                      "legal",
+                      "recruiting-careers",
+                      "industrial-manufacturing",
+                      "real-estate",
+                      "arts-culture",
+                      "sports-fitness",
+                      "food-dining",
+                      "automotive",
+                      "government-public-services",
+                      "science-research"
+                    ]
+                  },
+                  "maxItems": 5,
+                  "uniqueItems": true,
+                  "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "mcp"
+                    ]
+                  },
+                  "uniqueItems": true,
+                  "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+                },
+                "verified_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nested_llms_txt": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "contact": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sections": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "links": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "rank": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "registered_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "first_seen": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "badge": {
+                  "type": "string"
+                },
+                "claim": {
+                  "type": "object",
+                  "properties": {
+                    "hint": {
+                      "type": "string"
+                    },
+                    "verification": {
+                      "type": "string"
+                    },
+                    "verify": {
+                      "type": "string"
+                    },
+                    "docs": {
+                      "type": "string"
+                    },
+                    "mcp": {
+                      "type": "string"
+                    },
+                    "benefits": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "hint",
+                    "verification",
+                    "verify",
+                    "docs",
+                    "mcp",
+                    "benefits"
+                  ],
+                  "additionalProperties": false
+                },
+                "why": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "match_score": {
+                  "type": "number"
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "excerpt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "source_url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "url"
+                    ],
+                    "additionalProperties": true
+                  }
+                },
+                "category_evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "enum": [
+                          "ai-ml",
+                          "developer-tools",
+                          "infrastructure",
+                          "data-analytics",
+                          "cybersecurity",
+                          "finance-payments",
+                          "ecommerce",
+                          "productivity",
+                          "marketing",
+                          "education",
+                          "healthcare",
+                          "media",
+                          "design",
+                          "gaming",
+                          "travel",
+                          "community",
+                          "legal",
+                          "recruiting-careers",
+                          "industrial-manufacturing",
+                          "real-estate",
+                          "arts-culture",
+                          "sports-fitness",
+                          "food-dining",
+                          "automotive",
+                          "government-public-services",
+                          "science-research"
+                        ]
+                      },
+                      "confidence": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "description": "Deterministic rule strength, not a calibrated probability."
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "source": {
+                        "const": "publisher_metadata"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "confidence",
+                      "evidence",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "category_version": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "categorized_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "capability_evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "const": "mcp"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "source_url": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "const": "publisher_declared"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "url",
+                      "source_url",
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "domain",
+                "status",
+                "tier",
+                "authority",
+                "verified",
+                "title",
+                "summary",
+                "llms_txt",
+                "llms_full_txt",
+                "last_checked",
+                "agent_terms",
+                "categories",
+                "capabilities"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "page",
+          "per_page",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "Resolution": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "domain",
+              "topic"
+            ]
+          },
+          "best": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "valid",
+                  "invalid",
+                  "unreachable"
+                ]
+              },
+              "tier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "featured",
+                  "listed",
+                  "unlisted",
+                  "rejected",
+                  null
+                ]
+              },
+              "authority": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "verified": {
+                "type": "boolean"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "llms_txt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "llms_full_txt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "last_checked": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "agent_terms": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "automated_access": {
+                        "type": "string",
+                        "enum": [
+                          "welcome",
+                          "limited",
+                          "ask",
+                          "not_allowed"
+                        ]
+                      },
+                      "rate_limit": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "attribution": {
+                        "type": "string",
+                        "enum": [
+                          "required",
+                          "appreciated",
+                          "none"
+                        ]
+                      },
+                      "attribution_text": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "pricing": {
+                        "type": "string",
+                        "enum": [
+                          "free",
+                          "freemium",
+                          "paid"
+                        ]
+                      },
+                      "pricing_url": {
+                        "type": "string"
+                      },
+                      "terms_url": {
+                        "type": "string"
+                      },
+                      "notes": {
+                        "type": "string",
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ai-ml",
+                    "developer-tools",
+                    "infrastructure",
+                    "data-analytics",
+                    "cybersecurity",
+                    "finance-payments",
+                    "ecommerce",
+                    "productivity",
+                    "marketing",
+                    "education",
+                    "healthcare",
+                    "media",
+                    "design",
+                    "gaming",
+                    "travel",
+                    "community",
+                    "legal",
+                    "recruiting-careers",
+                    "industrial-manufacturing",
+                    "real-estate",
+                    "arts-culture",
+                    "sports-fitness",
+                    "food-dining",
+                    "automotive",
+                    "government-public-services",
+                    "science-research"
+                  ]
+                },
+                "maxItems": 5,
+                "uniqueItems": true,
+                "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "mcp"
+                  ]
+                },
+                "uniqueItems": true,
+                "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+              },
+              "verified_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nested_llms_txt": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "contact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "sections": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "links": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "rank": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "registered_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "first_seen": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "badge": {
+                "type": "string"
+              },
+              "claim": {
+                "type": "object",
+                "properties": {
+                  "hint": {
+                    "type": "string"
+                  },
+                  "verification": {
+                    "type": "string"
+                  },
+                  "verify": {
+                    "type": "string"
+                  },
+                  "docs": {
+                    "type": "string"
+                  },
+                  "mcp": {
+                    "type": "string"
+                  },
+                  "benefits": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "hint",
+                  "verification",
+                  "verify",
+                  "docs",
+                  "mcp",
+                  "benefits"
+                ],
+                "additionalProperties": false
+              },
+              "why": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "match_score": {
+                "type": "number"
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "excerpt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "source_url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "category_evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "enum": [
+                        "ai-ml",
+                        "developer-tools",
+                        "infrastructure",
+                        "data-analytics",
+                        "cybersecurity",
+                        "finance-payments",
+                        "ecommerce",
+                        "productivity",
+                        "marketing",
+                        "education",
+                        "healthcare",
+                        "media",
+                        "design",
+                        "gaming",
+                        "travel",
+                        "community",
+                        "legal",
+                        "recruiting-careers",
+                        "industrial-manufacturing",
+                        "real-estate",
+                        "arts-culture",
+                        "sports-fitness",
+                        "food-dining",
+                        "automotive",
+                        "government-public-services",
+                        "science-research"
+                      ]
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "Deterministic rule strength, not a calibrated probability."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "source": {
+                      "const": "publisher_metadata"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "confidence",
+                    "evidence",
+                    "source"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "category_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "categorized_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "capability_evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "const": "mcp"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "source_url": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "const": "publisher_declared"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "url",
+                    "source_url",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "domain",
+              "status",
+              "tier",
+              "authority",
+              "verified",
+              "title",
+              "summary",
+              "llms_txt",
+              "llms_full_txt",
+              "last_checked",
+              "agent_terms",
+              "categories",
+              "capabilities"
+            ],
+            "additionalProperties": false
+          },
+          "read": {
+            "type": "object",
+            "properties": {
+              "llms_txt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "llms_full_txt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nested_llms_txt": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "llms_txt",
+              "llms_full_txt",
+              "nested_llms_txt"
+            ],
+            "additionalProperties": false
+          },
+          "terms": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "automated_access": {
+                    "type": "string",
+                    "enum": [
+                      "welcome",
+                      "limited",
+                      "ask",
+                      "not_allowed"
+                    ]
+                  },
+                  "rate_limit": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "attribution": {
+                    "type": "string",
+                    "enum": [
+                      "required",
+                      "appreciated",
+                      "none"
+                    ]
+                  },
+                  "attribution_text": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "pricing": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "freemium",
+                      "paid"
+                    ]
+                  },
+                  "pricing_url": {
+                    "type": "string"
+                  },
+                  "terms_url": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "health": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "valid",
+                  "invalid",
+                  "unreachable"
+                ]
+              },
+              "tier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "featured",
+                  "listed",
+                  "unlisted",
+                  "rejected",
+                  null
+                ]
+              },
+              "authority": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "last_checked": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "checked_minutes_ago": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "max_age_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "live_checked": {
+                "type": "boolean"
+              },
+              "http_status": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "last_valid": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "content_hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "ok",
+              "status",
+              "tier",
+              "authority",
+              "last_checked",
+              "checked_minutes_ago",
+              "stale",
+              "max_age_seconds",
+              "live_checked",
+              "http_status",
+              "last_valid",
+              "content_hash"
+            ],
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "excerpt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "section": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "match_score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "content_hash": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "url",
+                "title",
+                "excerpt",
+                "section",
+                "source_url",
+                "match_score",
+                "checked_at",
+                "content_hash"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "match": {
+            "type": "object",
+            "properties": {
+              "strength": {
+                "type": "string",
+                "enum": [
+                  "domain",
+                  "strong",
+                  "weak"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "strength",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "provenance": {
+            "type": "object",
+            "properties": {
+              "selection": {
+                "const": "directory"
+              },
+              "verification": {
+                "const": "domain_ownership"
+              },
+              "terms": {
+                "type": "string",
+                "enum": [
+                  "owner_stated",
+                  "unknown"
+                ]
+              },
+              "excerpts": {
+                "const": "publisher_link_metadata"
+              },
+              "health": {
+                "type": "string",
+                "enum": [
+                  "live_check",
+                  "stored_crawl"
+                ]
+              }
+            },
+            "required": [
+              "selection",
+              "verification",
+              "terms",
+              "excerpts",
+              "health"
+            ],
+            "additionalProperties": false
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "authority": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "tier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "featured",
+                    "listed",
+                    "unlisted",
+                    "rejected",
+                    null
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                },
+                "llms_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "match_score": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "domain",
+                "title",
+                "authority",
+                "tier",
+                "verified",
+                "llms_txt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "watch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "mode",
+          "best",
+          "read",
+          "terms",
+          "health",
+          "sources",
+          "match",
+          "provenance",
+          "alternatives",
+          "watch"
+        ],
+        "additionalProperties": false
+      },
+      "NoMatch": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "domain",
+              "topic"
+            ]
+          },
+          "best": {
+            "type": "null"
+          },
+          "match": {
+            "type": "object",
+            "properties": {
+              "strength": {
+                "type": "string",
+                "enum": [
+                  "domain",
+                  "strong",
+                  "weak"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "strength",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "excerpt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "section": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "match_score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "content_hash": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "url",
+                "title",
+                "excerpt",
+                "section",
+                "source_url",
+                "match_score",
+                "checked_at",
+                "content_hash"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "suggest": {
+            "type": "object",
+            "properties": {
+              "hint": {
+                "type": "string"
+              },
+              "check": {
+                "type": "string"
+              },
+              "register": {
+                "type": "string"
+              },
+              "search": {
+                "type": "string"
+              },
+              "browse": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "hint"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "mode",
+          "best",
+          "suggest"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "retry_after_seconds": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": true
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "excerpt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "match_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "checked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content_hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "title",
+          "excerpt",
+          "section",
+          "source_url",
+          "match_score",
+          "checked_at",
+          "content_hash"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "valid",
+              "invalid",
+              "unreachable"
+            ]
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "featured",
+              "listed",
+              "unlisted",
+              "rejected",
+              null
+            ]
+          },
+          "authority": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checked_minutes_ago": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "max_age_seconds": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "live_checked": {
+            "type": "boolean"
+          },
+          "http_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "last_valid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content_hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "status",
+          "tier",
+          "authority",
+          "last_checked",
+          "checked_minutes_ago",
+          "stale",
+          "max_age_seconds",
+          "live_checked",
+          "http_status",
+          "last_valid",
+          "content_hash"
+        ],
+        "additionalProperties": false
+      },
+      "Watch": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "integer"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "test": {
+            "type": "string"
+          },
+          "unsubscribe": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "watch_id",
+          "domain",
+          "webhook_url",
+          "secret",
+          "events",
+          "delivery",
+          "test",
+          "unsubscribe",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "Unwatch": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "integer"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "active": {
+            "const": false
+          }
+        },
+        "required": [
+          "watch_id",
+          "domain",
+          "active"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationResult": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "watch_id": {
+            "type": "integer"
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "event": {
+                  "type": "string"
+                },
+                "channel": {
+                  "type": "string"
+                },
+                "watch_id": {
+                  "type": "integer"
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "event",
+                "ok",
+                "detail"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "domain",
+          "attempts"
+        ],
+        "additionalProperties": false
+      },
+      "Stats": {
+        "type": "object",
+        "properties": {
+          "domains_tracked": {
+            "type": "integer"
+          },
+          "valid_llms_txt": {
+            "type": "integer"
+          },
+          "listed": {
+            "type": "integer"
+          },
+          "verified": {
+            "type": "integer"
+          },
+          "with_llms_full_txt": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "domains_tracked",
+          "valid_llms_txt",
+          "listed",
+          "verified",
+          "with_llms_full_txt",
+          "pending",
+          "last_checked"
+        ],
+        "additionalProperties": false
+      },
+      "Verification": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "verify_endpoint": {
+            "type": "string"
+          },
+          "claim_endpoint": {
+            "type": "string"
+          },
+          "manage": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "llms_txt",
+                    "dns",
+                    "meta",
+                    "well_known"
+                  ]
+                },
+                "description": {
+                  "type": "string"
+                },
+                "snippet": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "description"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "domain",
+          "verify_endpoint",
+          "methods"
+        ],
+        "additionalProperties": false
+      },
+      "Registration": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "valid",
+              "invalid",
+              "unreachable"
+            ]
+          },
+          "queued": {
+            "type": "boolean"
+          },
+          "lookup": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              },
+              "verify_endpoint": {
+                "type": "string"
+              },
+              "claim_endpoint": {
+                "type": "string"
+              },
+              "manage": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "methods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "llms_txt",
+                        "dns",
+                        "meta",
+                        "well_known"
+                      ]
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "method",
+                    "description"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "domain",
+              "verify_endpoint",
+              "methods"
+            ],
+            "additionalProperties": false
+          },
+          "benefits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "queued",
+          "lookup",
+          "verification",
+          "benefits"
+        ],
+        "additionalProperties": false
+      },
+      "VerificationResult": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "verified": {
+            "const": true
+          },
+          "via": {
+            "type": "string"
+          },
+          "api_key": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "manage": {
+            "type": "string"
+          },
+          "badge": {
+            "type": "object",
+            "properties": {
+              "svg": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "markdown": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "svg",
+              "html",
+              "markdown"
+            ],
+            "additionalProperties": false
+          },
+          "notifications": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "verified",
+          "via",
+          "api_key",
+          "note",
+          "manage",
+          "badge",
+          "notifications"
+        ],
+        "additionalProperties": false
+      },
+      "PendingVerification": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "verified": {
+            "const": false
+          },
+          "checked": {
+            "type": "object",
+            "properties": {
+              "llms_txt": {
+                "type": "boolean"
+              },
+              "dns": {
+                "type": "boolean"
+              },
+              "meta": {
+                "type": "boolean"
+              },
+              "well_known": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "hint": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              },
+              "verify_endpoint": {
+                "type": "string"
+              },
+              "claim_endpoint": {
+                "type": "string"
+              },
+              "manage": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "methods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "llms_txt",
+                        "dns",
+                        "meta",
+                        "well_known"
+                      ]
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "method",
+                    "description"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "domain",
+              "verify_endpoint",
+              "methods"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "domain",
+          "verified",
+          "checked",
+          "hint",
+          "verification"
+        ],
+        "additionalProperties": false
+      },
+      "SiteUpdate": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10
+          },
+          "nested_llms_txt": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20
+          },
+          "contact": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "agent_terms": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "automated_access": {
+                    "type": "string",
+                    "enum": [
+                      "welcome",
+                      "limited",
+                      "ask",
+                      "not_allowed"
+                    ]
+                  },
+                  "rate_limit": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "attribution": {
+                    "type": "string",
+                    "enum": [
+                      "required",
+                      "appreciated",
+                      "none"
+                    ]
+                  },
+                  "attribution_text": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "pricing": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "freemium",
+                      "paid"
+                    ]
+                  },
+                  "pricing_url": {
+                    "type": "string"
+                  },
+                  "terms_url": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "webhook_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notify_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "UpdatedSite": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "valid",
+              "invalid",
+              "unreachable"
+            ]
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "featured",
+              "listed",
+              "unlisted",
+              "rejected",
+              null
+            ]
+          },
+          "authority": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_txt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_full_txt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agent_terms": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "automated_access": {
+                    "type": "string",
+                    "enum": [
+                      "welcome",
+                      "limited",
+                      "ask",
+                      "not_allowed"
+                    ]
+                  },
+                  "rate_limit": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "attribution": {
+                    "type": "string",
+                    "enum": [
+                      "required",
+                      "appreciated",
+                      "none"
+                    ]
+                  },
+                  "attribution_text": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "pricing": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "freemium",
+                      "paid"
+                    ]
+                  },
+                  "pricing_url": {
+                    "type": "string"
+                  },
+                  "terms_url": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research"
+              ]
+            },
+            "maxItems": 5,
+            "uniqueItems": true,
+            "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "uniqueItems": true,
+            "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+          },
+          "verified_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nested_llms_txt": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contact": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sections": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rank": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "registered_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_seen": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "badge": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "object",
+            "properties": {
+              "hint": {
+                "type": "string"
+              },
+              "verification": {
+                "type": "string"
+              },
+              "verify": {
+                "type": "string"
+              },
+              "docs": {
+                "type": "string"
+              },
+              "mcp": {
+                "type": "string"
+              },
+              "benefits": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "hint",
+              "verification",
+              "verify",
+              "docs",
+              "mcp",
+              "benefits"
+            ],
+            "additionalProperties": false
+          },
+          "why": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "match_score": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "excerpt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "url"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "category_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "ai-ml",
+                    "developer-tools",
+                    "infrastructure",
+                    "data-analytics",
+                    "cybersecurity",
+                    "finance-payments",
+                    "ecommerce",
+                    "productivity",
+                    "marketing",
+                    "education",
+                    "healthcare",
+                    "media",
+                    "design",
+                    "gaming",
+                    "travel",
+                    "community",
+                    "legal",
+                    "recruiting-careers",
+                    "industrial-manufacturing",
+                    "real-estate",
+                    "arts-culture",
+                    "sports-fitness",
+                    "food-dining",
+                    "automotive",
+                    "government-public-services",
+                    "science-research"
+                  ]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Deterministic rule strength, not a calibrated probability."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "source": {
+                  "const": "publisher_metadata"
+                }
+              },
+              "required": [
+                "id",
+                "confidence",
+                "evidence",
+                "source"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "category_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "categorized_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capability_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "const": "mcp"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "status": {
+                  "const": "publisher_declared"
+                }
+              },
+              "required": [
+                "id",
+                "url",
+                "source_url",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "notifications": {
+            "type": "object",
+            "properties": {
+              "webhook_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "notify_email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "webhook_url",
+              "notify_email"
+            ],
+            "additionalProperties": false
+          },
+          "webhook_secret": {
+            "type": "string"
+          },
+          "webhook_note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "tier",
+          "authority",
+          "verified",
+          "title",
+          "summary",
+          "llms_txt",
+          "llms_full_txt",
+          "last_checked",
+          "agent_terms",
+          "categories",
+          "capabilities",
+          "notifications"
+        ],
+        "additionalProperties": false
+      },
+      "SiteStats": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "verified_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lookups": {
+            "type": "integer"
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "featured",
+              "listed",
+              "unlisted",
+              "rejected",
+              null
+            ]
+          },
+          "authority": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "breakdown": {
+            "type": "object",
+            "properties": {
+              "reach": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "trust": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "quality": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "freshness": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "reach",
+              "trust",
+              "quality",
+              "freshness"
+            ],
+            "additionalProperties": false
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "homepage_ok": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "links_checked": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "links_ok": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "homepage_ok",
+              "links_checked",
+              "links_ok"
+            ],
+            "additionalProperties": false
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "badge": {
+            "type": "object",
+            "properties": {
+              "svg": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "markdown": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "svg",
+              "html",
+              "markdown"
+            ],
+            "additionalProperties": false
+          },
+          "notifications": {
+            "type": "object",
+            "properties": {
+              "webhook_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "notify_email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "recent": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "event": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "watch_id": {
+                      "type": "integer"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "detail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sent_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "event",
+                    "channel",
+                    "ok",
+                    "detail",
+                    "sent_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "webhook_url",
+              "notify_email",
+              "recent"
+            ],
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "authority": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "reach": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "trust": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "quality": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "freshness": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "checked_at",
+                "authority",
+                "reach",
+                "trust",
+                "quality",
+                "freshness"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "lookups_note": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "measurement_started_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "window_days": {
+                "type": "integer"
+              },
+              "from": {
+                "type": "string"
+              },
+              "through": {
+                "type": "string"
+              },
+              "active_days": {
+                "type": "integer"
+              },
+              "requests": {
+                "type": "object",
+                "properties": {
+                  "web": {
+                    "type": "integer"
+                  },
+                  "rest": {
+                    "type": "integer"
+                  },
+                  "mcp": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "web",
+                  "rest",
+                  "mcp"
+                ],
+                "additionalProperties": false
+              },
+              "profile_views": {
+                "type": "integer"
+              },
+              "documentation_selections": {
+                "type": "integer"
+              },
+              "referrals": {
+                "type": "integer"
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "event": {
+                      "type": "string"
+                    },
+                    "surface": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "active_days": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "event",
+                    "surface",
+                    "count",
+                    "active_days"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "daily": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "day": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "surface": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "day",
+                    "event",
+                    "surface",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "measurement_started_at",
+              "window_days",
+              "from",
+              "through",
+              "active_days",
+              "requests",
+              "profile_views",
+              "documentation_selections",
+              "referrals",
+              "events",
+              "daily",
+              "limitations"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "domain",
+          "verified_at",
+          "lookups",
+          "tier",
+          "authority",
+          "breakdown",
+          "checks",
+          "last_checked",
+          "badge",
+          "notifications",
+          "history"
+        ],
+        "additionalProperties": false
+      },
+      "Check": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ok": {
+                  "type": "boolean"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ok",
+                "label",
+                "detail"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "score": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          },
+          "listed": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "valid",
+                      "invalid",
+                      "unreachable"
+                    ]
+                  },
+                  "tier": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "featured",
+                      "listed",
+                      "unlisted",
+                      "rejected",
+                      null
+                    ]
+                  },
+                  "authority": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "verified": {
+                    "type": "boolean"
+                  },
+                  "page": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "tier",
+                  "authority",
+                  "verified",
+                  "page"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plausible": {
+            "type": "boolean"
+          },
+          "parsed": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "sectionCount": {
+                "type": "integer"
+              },
+              "linkCount": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "title",
+              "summary",
+              "sectionCount",
+              "linkCount"
+            ],
+            "additionalProperties": false
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "http_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "checked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content_hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "valid",
+              "unreachable",
+              "needs work"
+            ]
+          },
+          "preview": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "domain",
+          "url",
+          "checks",
+          "score",
+          "max",
+          "listed",
+          "verdict",
+          "preview"
+        ],
+        "additionalProperties": false
+      },
+      "Generated": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "const": true
+          },
+          "domain": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sampled": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "domain",
+          "title",
+          "description",
+          "pages",
+          "source",
+          "sampled",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "CategoryStats": {
+        "type": "object",
+        "properties": {
+          "taxonomy_version": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "ai-ml",
+                    "developer-tools",
+                    "infrastructure",
+                    "data-analytics",
+                    "cybersecurity",
+                    "finance-payments",
+                    "ecommerce",
+                    "productivity",
+                    "marketing",
+                    "education",
+                    "healthcare",
+                    "media",
+                    "design",
+                    "gaming",
+                    "travel",
+                    "community",
+                    "legal",
+                    "recruiting-careers",
+                    "industrial-manufacturing",
+                    "real-estate",
+                    "arts-culture",
+                    "sports-fitness",
+                    "food-dining",
+                    "automotive",
+                    "government-public-services",
+                    "science-research"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "description",
+                "count"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "const": "mcp"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "count"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "uncategorized": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "taxonomy_version",
+          "categories",
+          "capabilities",
+          "uncategorized"
+        ],
+        "additionalProperties": false
+      },
+      "CategoryId": {
+        "type": "string",
+        "enum": [
+          "ai-ml",
+          "developer-tools",
+          "infrastructure",
+          "data-analytics",
+          "cybersecurity",
+          "finance-payments",
+          "ecommerce",
+          "productivity",
+          "marketing",
+          "education",
+          "healthcare",
+          "media",
+          "design",
+          "gaming",
+          "travel",
+          "community",
+          "legal",
+          "recruiting-careers",
+          "industrial-manufacturing",
+          "real-estate",
+          "arts-culture",
+          "sports-fitness",
+          "food-dining",
+          "automotive",
+          "government-public-services",
+          "science-research"
+        ]
+      },
+      "ClaimChallenge": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "claim_id": {
+            "type": "string"
+          },
+          "claim_secret": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              },
+              "verify_endpoint": {
+                "type": "string"
+              },
+              "claim_endpoint": {
+                "type": "string"
+              },
+              "manage": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "methods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "llms_txt",
+                        "dns",
+                        "meta",
+                        "well_known"
+                      ]
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "method",
+                    "description"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "domain",
+              "verify_endpoint",
+              "methods"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "domain",
+          "claim_id",
+          "claim_secret",
+          "expires_at",
+          "verification"
+        ],
+        "additionalProperties": false
+      },
+      "ClaimCredentials": {
+        "type": "object",
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "claim_secret": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "claim_id",
+          "claim_secret"
+        ],
+        "additionalProperties": false
+      },
+      "OwnerKey": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "api_key": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "api_key",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

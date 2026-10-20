@@ -1,0 +1,478 @@
+{
+  "schema_version": 1,
+  "label": "live-0.7.0-2026-10-19",
+  "started_at": "2026-10-19T17:54:00.693Z",
+  "completed_at": "2026-10-19T17:54:01.879Z",
+  "base_url": "https://agentwebmap.com",
+  "parameters": {
+    "detail": "compact",
+    "max_age": 86400,
+    "source_limit": 3,
+    "repeat": 1,
+    "task_count": 20,
+    "timeout_ms": 15000
+  },
+  "methodology": {
+    "source_hit": "Expected host (or subdomain) AND path regex among returned sources only",
+    "provider_hit": "best.domain matches an expected host or subdomain; not a page-level success",
+    "token_estimate": "Heuristic ceil(JSON response UTF-16 code units / 4), NOT tokenizer usage or billing",
+    "response_bytes": "Uncompressed UTF-8 response body; excludes headers, destination fetches and model work",
+    "latency": "Sequential client-observed request plus body read; includes error attempts; no retry or warm-up"
+  },
+  "summary": {
+    "attempts": 20,
+    "source_hit_rate_at_1": 0.25,
+    "source_hit_rate_at_3": 0.25,
+    "provider_hit_rate": 0.4,
+    "non_2xx_or_transport_errors": 2,
+    "stale_results": 14,
+    "freshness_unknown": 2,
+    "latency_ms": {
+      "median": 28.49,
+      "p95": 124.56
+    },
+    "response_bytes": {
+      "mean": 3046.75,
+      "total": 60935
+    },
+    "estimated_response_tokens": {
+      "mean": 760.95,
+      "total": 15219
+    }
+  },
+  "results": [
+    {
+      "id": "stripe-webhooks",
+      "query": "stripe webhooks",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 345.13,
+      "response_bytes": 3399,
+      "estimated_response_tokens": 850,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://www.paidmembershipspro.com/gateway/stripe/setup/",
+        "https://www.paidmembershipspro.com/add-ons/pmpro-import-users-csv/"
+      ],
+      "best_domain": "paidmembershipspro.com",
+      "stale": false,
+      "match_strength": "strong"
+    },
+    {
+      "id": "stripe-idempotency",
+      "query": "stripe idempotent requests",
+      "iteration": 1,
+      "status": 404,
+      "error": null,
+      "latency_ms": 22.04,
+      "response_bytes": 396,
+      "estimated_response_tokens": 99,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [],
+      "best_domain": null,
+      "stale": null,
+      "match_strength": "weak"
+    },
+    {
+      "id": "stripe-subscriptions",
+      "query": "stripe subscriptions",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 124.56,
+      "response_bytes": 3445,
+      "estimated_response_tokens": 862,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://trackdesk.com/integrations/stripe",
+        "https://trackdesk.com/features/recurring-commissions",
+        "https://trackdesk.com/use-case/saas"
+      ],
+      "best_domain": "trackdesk.com",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "cloudflare-bindings",
+      "query": "cloudflare workers bindings",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 25.46,
+      "response_bytes": 2946,
+      "estimated_response_tokens": 737,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://gologin.com/blog/cloudflare-browser-rendering/",
+        "https://gologin.com/blog/browser-automation-tools/"
+      ],
+      "best_domain": "gologin.com",
+      "stale": true,
+      "match_strength": "weak"
+    },
+    {
+      "id": "cloudflare-kv",
+      "query": "cloudflare workers kv",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 23.38,
+      "response_bytes": 3265,
+      "estimated_response_tokens": 817,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": true,
+      "source_urls": [
+        "https://www.cloudflare.com/products/kv.md",
+        "https://www.cloudflare.com/products/workers-ai.md",
+        "https://www.cloudflare.com/products/workers.md"
+      ],
+      "best_domain": "cloudflare.com",
+      "stale": true,
+      "match_strength": "weak"
+    },
+    {
+      "id": "cloudflare-r2",
+      "query": "cloudflare r2 object storage",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 25.04,
+      "response_bytes": 3385,
+      "estimated_response_tokens": 847,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": true,
+      "source_urls": [
+        "https://www.cloudflare.com/products/r2.md",
+        "https://www.cloudflare.com/plans.md",
+        "https://www.cloudflare.com/products/durable-objects.md"
+      ],
+      "best_domain": "cloudflare.com",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "supabase-rls",
+      "query": "supabase row level security",
+      "iteration": 1,
+      "status": 404,
+      "error": null,
+      "latency_ms": 21.46,
+      "response_bytes": 400,
+      "estimated_response_tokens": 100,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [],
+      "best_domain": null,
+      "stale": null,
+      "match_strength": "weak"
+    },
+    {
+      "id": "supabase-auth",
+      "query": "supabase authentication",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 43.44,
+      "response_bytes": 3725,
+      "estimated_response_tokens": 932,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://docs.onspace.ai/integrations/supabase-integration",
+        "https://www.onspace.ai/blog/how-to-use-ai-for-supabase",
+        "https://www.onspace.ai/ai-supabase"
+      ],
+      "best_domain": "onspace.ai",
+      "stale": false,
+      "match_strength": "strong"
+    },
+    {
+      "id": "vercel-environment",
+      "query": "vercel environment variables",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 64.36,
+      "response_bytes": 3725,
+      "estimated_response_tokens": 932,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": true,
+      "source_urls": [
+        "https://vercel.com/academy/filesystem-agents/filesystem-project-setup",
+        "https://vercel.com/academy/v0-foundations/handling-email-with-resend",
+        "https://vercel.com/academy/vercel-sandbox"
+      ],
+      "best_domain": "vercel.com",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "nextjs-caching",
+      "query": "nextjs caching",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 28.44,
+      "response_bytes": 2961,
+      "estimated_response_tokens": 740,
+      "source_hit_at_1": true,
+      "source_hit_at_3": true,
+      "provider_hit": true,
+      "source_urls": [
+        "https://nextjs.org/docs/app/getting-started/caching",
+        "https://nextjs.org/docs/app/guides/caching-without-cache-components",
+        "https://nextjs.org/docs/pages/guides/ci-build-caching"
+      ],
+      "best_domain": "nextjs.org",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "nextjs-middleware",
+      "query": "nextjs middleware",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 28.49,
+      "response_bytes": 3443,
+      "estimated_response_tokens": 843,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://alestaweb.com/haber/nextjs-15-destek-sonu-21-ekim-2026-nextjs-16-gecis-rehberi",
+        "https://alestaweb.com/haber/nextjs-ekim-2026-guvenlik-guncellemesi-use-cache-svg-rce-rehberi"
+      ],
+      "best_domain": "alestaweb.com",
+      "stale": false,
+      "match_strength": "strong"
+    },
+    {
+      "id": "prisma-transactions",
+      "query": "prisma transactions",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 22.78,
+      "response_bytes": 2452,
+      "estimated_response_tokens": 613,
+      "source_hit_at_1": true,
+      "source_hit_at_3": true,
+      "provider_hit": true,
+      "source_urls": [
+        "https://www.prisma.io/postgres/customer-order-transactions",
+        "https://www.prisma.io/postgres/customer-order-transactions.md"
+      ],
+      "best_domain": "prisma.io",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "resend-webhooks",
+      "query": "resend webhooks",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 39.52,
+      "response_bytes": 3291,
+      "estimated_response_tokens": 823,
+      "source_hit_at_1": true,
+      "source_hit_at_3": true,
+      "provider_hit": true,
+      "source_urls": [
+        "https://resend.com/docs/webhooks/contacts/topics-updated.md",
+        "https://resend.com/docs/webhooks/emails/delivery-delayed.md",
+        "https://resend.com/docs/webhooks/emails/scheduled.md"
+      ],
+      "best_domain": "resend.com",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "clerk-session",
+      "query": "clerk session tokens",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 25.44,
+      "response_bytes": 3230,
+      "estimated_response_tokens": 808,
+      "source_hit_at_1": true,
+      "source_hit_at_3": true,
+      "provider_hit": true,
+      "source_urls": [
+        "https://dashboard.clerk.com/settings/access-tokens",
+        "https://dashboard.clerk.com/~/users",
+        "https://clerk.com/docs/guides/how-clerk-works/overview.md"
+      ],
+      "best_domain": "clerk.com",
+      "stale": true,
+      "match_strength": "weak"
+    },
+    {
+      "id": "astro-routing",
+      "query": "astro routing",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 28.01,
+      "response_bytes": 2895,
+      "estimated_response_tokens": 723,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://yippy.com/t/y1z2ywxmnczdvakjywwh/",
+        "https://yippy.com/t/y1j4yabbamqu5pts9zkz/",
+        "https://yippy.com/t/y1rxuwwdyn2svm4qw6zk/"
+      ],
+      "best_domain": "yippy.com",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "openai-tools",
+      "query": "openai function calling",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 51.58,
+      "response_bytes": 3749,
+      "estimated_response_tokens": 937,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://supermemory.ai/docs/integrations/openai.md",
+        "https://supermemory.ai/docs/self-hosting/providers.md",
+        "https://supermemory.ai/docs/api-reference/content-management/forget-memories-matching-a-promptquery.md"
+      ],
+      "best_domain": "supermemory.ai",
+      "stale": false,
+      "match_strength": "strong"
+    },
+    {
+      "id": "anthropic-tools",
+      "query": "anthropic tool use",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 82.64,
+      "response_bytes": 3593,
+      "estimated_response_tokens": 898,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://exa.ai/docs/integrations/tool-calling/anthropic.md",
+        "https://exa.ai/docs/index.md",
+        "https://exa.ai/docs/get-started/exa-mcp.md"
+      ],
+      "best_domain": "exa.ai",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "webhook-retries",
+      "query": "webhook retries",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 88.27,
+      "response_bytes": 3792,
+      "estimated_response_tokens": 947,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://developer.loopwork.co/reference/webhook-retry-mechanism.md",
+        "https://developer.loopwork.co/changelog/identify-dunning-status-directly-from-order-and-subscription-webhooks.md",
+        "https://developer.loopwork.co/reference/subscribe-to-webhooks.md"
+      ],
+      "best_domain": "loopwork.co",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "database-pooling",
+      "query": "database connection pooling",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 38.35,
+      "response_bytes": 3230,
+      "estimated_response_tokens": 808,
+      "source_hit_at_1": false,
+      "source_hit_at_3": false,
+      "provider_hit": false,
+      "source_urls": [
+        "https://render.com/docs/postgresql-connection-pooling.md",
+        "https://render.com/docs/private-link.md",
+        "https://render.com/docs/inbound-ip-rules.md"
+      ],
+      "best_domain": "render.com",
+      "stale": true,
+      "match_strength": "strong"
+    },
+    {
+      "id": "durable-objects",
+      "query": "durable objects",
+      "iteration": 1,
+      "status": 200,
+      "error": null,
+      "latency_ms": 56.8,
+      "response_bytes": 3613,
+      "estimated_response_tokens": 903,
+      "source_hit_at_1": true,
+      "source_hit_at_3": true,
+      "provider_hit": true,
+      "source_urls": [
+        "https://www.cloudflare.com/products/durable-objects.md",
+        "https://www.cloudflare.com/products/r2.md"
+      ],
+      "best_domain": "cloudflare.com",
+      "stale": true,
+      "match_strength": "strong"
+    }
+  ],
+  "provenance": {
+    "api_version": "0.7.0",
+    "api_version_endpoint": "https://agentwebmap.com/openapi.json",
+    "api_version_observed_at": "2026-10-19T17:54:14.864Z",
+    "published_release_reference_commit": "9eb30c97d7b4aa96dbd4bce94128617801751ea5",
+    "commit_limitation": "Reference is the local published release commit; the public API exposes a version, not a verifiable deployed commit.",
+    "task_set_sha256": "85b1d4d6afb3e81f1daedcba7def46063fd30ff954e64263297e3e8675da0479",
+    "runner_sha256": "ac3550d05997fd01ee9c60425eda8b8c777763d4afbe396993b0ab303f90b06f",
+    "task_set_reference": "https://github.com/AgentWebMap/mcp/blob/9eb30c97d7b4aa96dbd4bce94128617801751ea5/benchmarks/tasks.json",
+    "runner_reference": "https://github.com/AgentWebMap/mcp/blob/9eb30c97d7b4aa96dbd4bce94128617801751ea5/benchmarks/run.mjs",
+    "run_command": "node benchmarks/run.mjs --base-url https://agentwebmap.com --label live-0.7.0-2026-10-19 --repeat 1 --limit 20 --output benchmarks/results/2026-10-19.json",
+    "refresh_requested": false,
+    "destination_pages_fetched": false,
+    "database_snapshot_frozen": false,
+    "independent_usage": false
+  },
+  "limitations": [
+    "20 hand-curated, developer-oriented tasks are not a representative sample or whole-index coverage estimate.",
+    "Expected host/path matching is automated URL evaluation, not answer correctness or agent task completion.",
+    "Expected-provider lists omit potentially relevant Render and Loopwork results; broad token rules can count a Clerk account dashboard.",
+    "Cloudflare KV and R2 .md product paths fail the fixed path regexes. Rules and results were preserved rather than retuned.",
+    "Destination pages were not fetched or semantically validated.",
+    "Client latency includes this network connection; data and cache states were not frozen.",
+    "No ordinary-search or competing-service baseline was run.",
+    "These API requests contribute QA traffic to service counters and are not independent adoption."
+  ]
+}

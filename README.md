@@ -3,22 +3,64 @@
   <img src="brand/logo.svg" alt="Agent Web Map" width="420">
 </picture></a></p>
 
-# Agent Web Map MCP server
+<p align="center"><a href="https://agentwebmap.com/discover">Try discovery</a> · <a href="https://agentwebmap.com/coverage">Coverage</a> · <a href="https://agentwebmap.com/benchmarks">Benchmarks</a> · <a href="https://agentwebmap.com/contact">Contact us</a> · <a href="https://x.com/AgentWebMap">X</a></p>
 
-[Agent Web Map](https://agentwebmap.com) is a directory of websites that publish [`llms.txt`](https://llmstxt.org/), validated and ranked by an authority score. This MCP server gives agents the same directory as tools: search it, look up a site's `llms.txt` and `llms-full.txt`, check or draft an `llms.txt`, and register and verify a site you control.
+# AgentWebMap: llms.txt documentation discovery for AI agents
 
-- **Endpoint:** `https://agentwebmap.com/mcp` (Streamable HTTP, stateless, no auth for reads)
-- **Docs:** https://agentwebmap.com/docs#mcp · OpenAPI: https://agentwebmap.com/openapi.json · `llms.txt`: https://agentwebmap.com/llms.txt
+[AgentWebMap](https://agentwebmap.com) indexes websites publishing [`llms.txt`](https://llmstxt.org/) and helps AI agents find relevant publisher documentation through a free API and MCP server. A domain or development task returns original source URLs, publisher-provided matching evidence, stored freshness information and owner-stated agent terms. Change notifications can help consumers notice when an indexed llms.txt changes or breaks.
+
+Start with a task such as **“modelcontextprotocol authorization”** in the [browser discovery page](https://agentwebmap.com/discover), or call the same resolver from your agent. Public reads need no account or API key. Connecting MCP makes the tools available to your client; your client decides when to call them.
+
+- **MCP:** `https://agentwebmap.com/mcp` (Streamable HTTP, stateless)
+- **REST:** [`/v1/resolve?q=modelcontextprotocol%20authorization`](https://agentwebmap.com/v1/resolve?q=modelcontextprotocol%20authorization)
+- **Project CLI:** `node examples/discover.mjs --project . --dry-run` ([guide](docs/discovery-cli.md))
+- **Reference:** [API docs](docs/api.md) · [OpenAPI](https://agentwebmap.com/openapi.json) · [directory llms.txt](https://agentwebmap.com/llms.txt)
+
+Coverage is incomplete. The index searches published link descriptions and headings, rather than the full text of every documentation page. Read returned original pages before implementing or quoting instructions; use the publisher's own search or web search when matches are missing, weak or stale. Ownership confirmation is a domain-control signal, not evidence of documentation accuracy. See the [coverage report](https://agentwebmap.com/coverage) for current index counts.
 
 ## Add it
 
-Claude Code:
+The same server works with Codex, Claude Code, Cursor, VS Code and other clients supporting remote HTTP MCP. Merge entries into an existing configuration rather than replacing it. `~` means your home directory.
+
+### Codex
 
 ```bash
-claude mcp add --transport http agentwebmap https://agentwebmap.com/mcp
+codex mcp add agentwebmap --url https://agentwebmap.com/mcp
 ```
 
-Cursor, Windsurf, VS Code and other clients that take a JSON config:
+Or add to `~/.codex/config.toml` (all projects), or `.codex/config.toml` in a trusted project:
+
+```toml
+[mcp_servers.agentwebmap]
+url = "https://agentwebmap.com/mcp"
+```
+
+[Official Codex MCP setup](https://developers.openai.com/codex/mcp/).
+
+### Claude Code
+
+```bash
+claude mcp add --transport http agentwebmap --scope project https://agentwebmap.com/mcp
+```
+
+Project configuration lives in `.mcp.json` at the project root:
+
+```json
+{
+  "mcpServers": {
+    "agentwebmap": {
+      "type": "http",
+      "url": "https://agentwebmap.com/mcp"
+    }
+  }
+}
+```
+
+Use `--scope user` for all projects, stored in `~/.claude.json`. [Official Claude Code MCP setup](https://code.claude.com/docs/en/mcp).
+
+### Cursor
+
+Add to `.cursor/mcp.json` in the project, or `~/.cursor/mcp.json` for all projects:
 
 ```json
 {
@@ -30,63 +72,122 @@ Cursor, Windsurf, VS Code and other clients that take a JSON config:
 }
 ```
 
-Plain HTTP, for a quick test:
+[Official Cursor MCP setup](https://cursor.com/docs/mcp).
+
+### VS Code
+
+Add to `.vscode/mcp.json` in the workspace. VS Code uses `servers` as the top-level key:
+
+```json
+{
+  "servers": {
+    "agentwebmap": {
+      "type": "http",
+      "url": "https://agentwebmap.com/mcp"
+    }
+  }
+}
+```
+
+For profile-level configuration, run **MCP: Open User Configuration** from the Command Palette. Current VS Code also supports the portable `.mcp.json` format shown for Claude Code, and user configuration in `~/.copilot/mcp-config.json` using `mcpServers`. [Official VS Code MCP setup](https://code.visualstudio.com/docs/agent-customization/mcp-servers).
+
+### Plain HTTP
 
 ```bash
-curl -X POST https://agentwebmap.com/mcp \
-  -H "content-type: application/json" -H "accept: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"lookup_domain","arguments":{"domain":"stripe.com"}}}'
+curl --get --fail-with-body https://agentwebmap.com/v1/resolve \
+  --data-urlencode "q=modelcontextprotocol authorization" \
+  --data-urlencode "limit=3" \
+  --data-urlencode "max_age=86400"
 ```
+
+A dependency-free MCP client with initialization and tool discovery is in [examples/mcp-client.mjs](examples/mcp-client.mjs):
+
+```bash
+node examples/mcp-client.mjs resolve '{"query":"modelcontextprotocol authorization","limit":3}'
+```
+
+## Discover documentation for a project
+
+The dependency-aware CLI reads a small set of manifests and maps recognized packages to publisher domains. Review the plan first, then request sources:
+
+```bash
+node examples/discover.mjs --project /path/to/project --dry-run
+node examples/discover.mjs --project /path/to/project
+node examples/discover.mjs --query "modelcontextprotocol authorization"
+```
+
+Node.js 20+ is sufficient; the CLI has no dependencies to install. It shows every curated mapping, skips unknown packages, and makes at most five sequential index requests by default. It does not execute project code, read `.env` files or lockfiles, crawl sites, or edit agent instructions. JSON results retain original URLs, source evidence and freshness. Use `--output sources.json` to create a new export without overwriting an existing file. See [the CLI guide](docs/discovery-cli.md) for supported manifests, bounds and fallback behavior.
+
+## Give agents a reason to call it
+
+Use `resolve` when a task needs a site's documentation and the exact page is unknown. Pass the publisher and task when known, for example `modelcontextprotocol authorization`. Read the returned source page before implementing or quoting it. Fall back to the site's documentation search or web search if evidence is weak, missing or stale. An empty result is useful information; listing ownership does not prove technical relevance.
+
+An optional, portable [agentwebmap-docs skill](skills/agentwebmap-docs/SKILL.md) describes that workflow, including terms, freshness and fallback behavior. To use it in a repository that supports Agent Skills, copy the `skills/agentwebmap-docs` folder to `.agents/skills/agentwebmap-docs`. This is an optional project change; connecting the MCP server does not install a skill. Other clients can use the same `SKILL.md` or adapt it to their instructions format.
+
+The index contains publisher-provided link descriptions and section headings, rather than the full text of every documentation page. Returned excerpts explain the match using that index; fetch the original source for current API details. Missing owner terms mean **unknown**, not unrestricted permission.
 
 ## Tools
 
 | Tool | What it does |
 |---|---|
-| `resolve` | Start here: a domain or a topic in, the best source out, with what to read, the owner's terms for agents, health and alternatives |
-| `watch_domain` | Get a signed JSON POST when a site's llms.txt changes, breaks or comes back |
-| `unwatch_domain` / `test_watch` | Manage a watch with its id and secret |
+| `resolve` | Domain or task to relevant documentation URLs, evidence, terms, freshness and alternatives; compact by default |
+| `search_llms_registry` | Search domains, titles, summaries, descriptions, tags and published documentation links; relevance ranks before verification |
+| `lookup_domain` | Find a domain's llms.txt, llms-full.txt, terms and directory metadata; `detail: "full"` includes owner information |
+| `list_domains` | Browse ranked sites; `verified_only` restricts to owner-verified sites |
+| `list_categories` | Read category IDs/descriptions/counts, the uncategorized count and publisher-declared capabilities before filtering discovery |
 | `directory_stats` | Directory-wide counts |
-| `search_llms_registry` | Full-text search over the directory, ranked by authority, verified owners first |
-| `list_domains` | Ranked listing; `verified_only` for owner-verified sites |
-| `lookup_domain` | Everything published about one domain: llms.txt and llms-full.txt URLs, title, summary, score, tier, verification state, country |
-| `check_llms_txt` | Validate a site's llms.txt the way an agent sees it, with what to fix |
-| `generate_llms_txt` | Draft an llms.txt from a site's own homepage, sitemap and page titles |
-| `verification_instructions` | The token and the four ways to prove ownership of a domain |
-| `register_domain` | Submit a domain for listing; returns the verification instructions |
-| `verify_domain` | Check the proof; on success returns the owner API key |
-| `update_site` | Owner: edit the profile and notification channels |
-| `site_stats` | Owner: lookups, score history, notifications, badge |
-| `recrawl_site` | Owner: re-validate now |
-| `test_notification` | Owner: send a test alert |
+| `check_llms_txt` | Live validation of a site's llms.txt, with suggested fixes |
+| `generate_llms_txt` | Draft an llms.txt from a site's homepage, sitemap and page titles |
+| `watch_domain` | Subscribe a webhook to changes, breakage and restoration |
+| `unwatch_domain` / `test_watch` | Manage an existing watch with its ID and secret |
+| `verification_instructions` | Public ownership methods and the endpoint for starting a private claim |
+| `register_domain` | Submit a domain for automatic checking; ownership confirmation is optional |
+| `begin_ownership_claim` / `verify_domain` | Start a fresh ownership challenge, then complete it using its private claim credentials |
+| `rotate_owner_key` | Owner: replace the API key and invalidate old keys, browser sessions and pending claims |
+| `update_site` | Owner: edit profile, terms and notification channels |
+| `site_stats` | Owner: measured web/REST/MCP requests, documentation selections, score history and notifications |
+| `recrawl_site` / `test_notification` | Owner: revalidate or send a test notification |
 
-Owner tools take the API key as an argument; everything else is open. Owners can also publish their terms for agents (`agent_terms`: automated access, rate limit, attribution, pricing, terms URL) through `update_site`; every lookup and `resolve` answer carries them.
+Protected owner tools require the site's API key. Starting a claim returns private claim credentials; `verify_domain` requires those credentials and the freshly published proof. Watch creation and owner operations have effects outside the current task: use them when requested. Documentation discovery needs only public read tools. Tools publish output schemas and annotations so clients can identify reads and writes.
 
-## Why verify a site
+## Freshness and response size
 
-Verified owners are sorted first, reach the featured tier sooner, get a link in agentwebmap.com's own `llms.txt`, an embeddable badge, breakage alerts by webhook or email, an editable profile and lookup analytics. Verification is two calls and needs no account: `register_domain`, place the token (a line in your llms.txt, a DNS TXT record, a meta tag, or a well-known file), `verify_domain`.
+`resolve` accepts `detail: "compact" | "full"`, `max_age` in seconds (0–2592000, default `86400`), `refresh: true` for live llms.txt validation, and `limit` from 1 to 5 for documentation sources (default 3). `health.stale` reports whether the check is older than the requested age; `health.live_checked` identifies a live check. A refresh checks the published llms.txt; it does not validate every linked page or update the stored index. Compact results keep owner-verification instructions out of repeated consumer calls. Use `detail: "full"` when those details are needed.
 
-## REST
+## Discover by category
 
-Everything above is also a JSON API. Start with `GET https://agentwebmap.com/v1/resolve?q=<domain or topic>`; `GET https://agentwebmap.com/v1` lists the rest. Live docs: https://agentwebmap.com/docs
+Call `list_categories` or `GET /v1/categories` to discover the taxonomy, then pass one category ID to `resolve`, `search_llms_registry` or `list_domains`. REST search, domain listing and resolve accept the same `category` filter. Compact domain responses include `categories`; full responses add the matching evidence and classification version. Use `capability: "mcp"` (REST `capability=mcp`) to discover sites publishing an explicit MCP endpoint link, separately from their business categories.
 
-## Docs and examples in this repository
+Categories are deterministic, multi-label classifications from publisher metadata. A site can have several labels or remain uncategorized when evidence is insufficient. Confidence is a rule score, not a probability, endorsement or verified business fact. Business categories do not prove that a site runs an MCP server; capability detection requires an explicit same-publisher endpoint declaration. Its availability and tools remain unverified, and a generic MCP mention is insufficient. See [category discovery and evidence](docs/categories.md) for the taxonomy, response fields and examples.
 
-- [docs/api.md](docs/api.md): the full API reference
-- [docs/webhooks.md](docs/webhooks.md): owner alerts and watches, payloads, signature verification in Node and Python
-- [docs/agent-terms.md](docs/agent-terms.md): the terms-for-agents specification
-- [openapi.json](openapi.json): snapshot of the OpenAPI description (the live one is at https://agentwebmap.com/openapi.json)
-- [examples/](examples/): `resolve.sh`, `resolve.py`, `mcp-client.mjs` (a dependency-free MCP client), `verify-site.sh`, `watch.sh`
+## Evidence and adoption
 
-Questions and ideas: [Discussions](https://github.com/AgentWebMap/mcp/discussions).
+[Task examples](docs/task-examples.md) show discovery, source reading and fallback. The [benchmark runner](benchmarks/README.md) uses 20 curated documentation tasks and reports source hit rate at 1 and 3, provider matches, latency, response bytes and a clearly labeled token estimate. The [live benchmark page](https://agentwebmap.com/benchmarks) explains published runs and their limits. Curated retrieval tasks do not establish accuracy for arbitrary work or adoption by independent agents. Run the same tasks against a baseline before claiming an improvement.
 
-## Brand
+The [coverage report](https://agentwebmap.com/coverage) shows current index counts. A directory listing is not a partnership, and requests can include bots, tests and repeated calls. [Distribution notes](docs/distribution.md) provide a concise project description and practical manual adoption steps without promising inclusion in AI answers.
 
-The logo and mark are in [`brand/`](brand/) (SVG and PNG). Use them to link to agentwebmap.com; verified owners can also embed the [status badge](https://agentwebmap.com/docs#badge).
+## For site owners
 
-## Contact
+Publish an llms.txt with descriptive links to useful documentation pages. Sites can be discovered and listed automatically; ownership confirmation is optional. To edit your listing, publish agent terms, configure breakage alerts or view measured usage, open [Manage your listing](https://agentwebmap.com/manage) and enter your domain. The browser guides you through publishing a DNS record, meta tag, proof file or llms.txt token, then provides a **Check ownership** button and an owner dashboard. No account or backlink is required.
 
-admin@agentwebmap.com
+Ownership confirmation records domain control, without endorsing a site's content. Search prioritizes relevance; browse listings still place confirmed owners first. Usage reports distinguish web, REST and MCP request volumes; they do not establish unique agents or confirmed reads of publisher pages. See the [ownership guide](docs/ownership.md) for API/MCP instructions, key recovery and the 0.7 migration. Existing owner keys continue to work; new ownership checks require fresh, expiring private claim credentials.
 
-## License
+## Reference and examples
 
-The contents of this repository are released under the MIT License. The directory's data and the service are provided by agentwebmap.com.
+- [docs/api.md](docs/api.md): API parameters and response fields
+- [docs/task-examples.md](docs/task-examples.md): practical agent workflows
+- [docs/discovery-cli.md](docs/discovery-cli.md): dependency-aware discovery, preview and safe JSON exports
+- [docs/distribution.md](docs/distribution.md): ready listing copy and manual adoption/visibility checks
+- [docs/categories.md](docs/categories.md): category discovery, filters and publisher evidence
+- [docs/webhooks.md](docs/webhooks.md): payloads and signature verification
+- [docs/agent-terms.md](docs/agent-terms.md): terms-for-agents specification
+- [docs/ownership.md](docs/ownership.md): optional browser management, secure claims, alerts and key recovery
+- [openapi.json](openapi.json): OpenAPI snapshot; the [live specification](https://agentwebmap.com/openapi.json) describes the deployed service
+- [examples/](examples/): shell, Python and Node clients, ownership verification and watches
+- [benchmarks/](benchmarks/): reproducible task dataset and dependency-free runner
+
+Questions and ideas: [Discussions](https://github.com/AgentWebMap/mcp/discussions) or [Issues](https://github.com/AgentWebMap/mcp/issues). Contact: admin@agentwebmap.com.
+
+## Brand and license
+
+The [brand assets](brand/) may be used to link to agentwebmap.com. The [X profile banner](brand/agentwebmap-x-banner.png) matches the website palette in a 3:1 format. This repository is released under the MIT License; the directory data and service are provided by agentwebmap.com.

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-19",
+  "purpose": "Manual, unbranded AI visibility checks; mentions and citations do not establish API or MCP use.",
+  "target_names": ["AgentWebMap", "Agent Web Map", "agentwebmap.com"],
+  "protocol": [
+    "Use a fresh conversation for each trial. Do not name the target in the conversation or add it to these prompts.",
+    "Record the platform, model if displayed, UTC timestamp, search or research mode, account/personalization context and exact prompt.",
+    "Retain the full answer and cited URLs. Record omissions, unsupported claims and failed requests as well as mentions.",
+    "Report mentions, linked citations and observed tool use separately. An answer recommending a tool does not establish that it used it.",
+    "Compare search-enabled and search-disabled trials separately. Record repetitions rather than choosing only favorable answers.",
+    "Use manual trials within each platform's terms. This file does not schedule or automate account access."
+  ],
+  "prompts": [
+    {
+      "id": "owner-original-directory-question",
+      "prompt": "are you aware of any websites or platforms that index websites with LLMs.txt and what those sites offer to AI Agents?"
+    },
+    {
+      "id": "llms-directory-comparison",
+      "prompt": "Which directories index websites that publish llms.txt, and what does each offer to AI agents? Explain the differences and cite sources if search is available."
+    },
+    {
+      "id": "documentation-discovery-api",
+      "prompt": "Where can an AI agent discover publisher documentation through a free API? Describe what the services return and their limitations."
+    },
+    {
+      "id": "documentation-discovery-mcp",
+      "prompt": "What MCP servers help agents discover documentation across websites? Distinguish finding sources from fetching pages and explain any freshness information."
+    },
+    {
+      "id": "publisher-monitoring",
+      "prompt": "I publish an llms.txt file. What services can help me check it, make it discoverable to agents, and monitor it for breakage?"
+    },
+    {
+      "id": "category-discovery",
+      "prompt": "How can an AI agent find websites by topic that publish llms.txt or declare an MCP endpoint, without treating a declaration as proof that a server works?"
+    }
+  ],
+  "result_fields": ["trial_id", "prompt_id", "platform", "model", "checked_at_utc", "search_mode", "personalization_context", "answer_text_or_public_link", "target_mentioned", "target_cited", "cited_urls", "tool_use_observed", "notes"],
+  "results": []
+}
