@@ -8,23 +8,23 @@ AgentWebMap helps AI agents find relevant publisher documentation through an exi
 
 **Short description:** Find publisher documentation through a free llms.txt discovery API and MCP server.
 
-**Description:** AgentWebMap indexes websites publishing llms.txt and resolves domains or development tasks into original documentation URLs, publisher-provided matching evidence and stored freshness information. Public reads require no API key. Agents can connect through Streamable HTTP MCP or REST; a dependency-aware Node.js CLI previews recognized package-to-publisher mappings before requesting sources. Optional change notifications and owner-managed listings support ongoing use. Coverage is incomplete, and consumers should read original pages and fall back when evidence is missing, weak or stale.
+**Description:** AgentWebMap indexes websites publishing llms.txt and resolves domains or development tasks into original documentation URLs, publisher-provided matching evidence and stored freshness information. Public reads require no API key. Agents can connect through Streamable HTTP MCP or REST; a dependency-aware Node.js CLI previews recognized package-to-publisher mappings before requesting sources. Verified owners can control their listing and return to a private dashboard for file health, measured discovery activity and score history. Coverage is incomplete, and consumers should read original pages and fall back when evidence is missing, weak or stale.
 
 **Links:**
 
-- Website and task demo: [agentwebmap.com/discover](https://agentwebmap.com/discover)
+- Website search: [agentwebmap.com/browse](https://agentwebmap.com/browse)
 - Client setup, docs and examples: [github.com/AgentWebMap/mcp](https://github.com/AgentWebMap/mcp)
 - MCP endpoint: `https://agentwebmap.com/mcp`
 - Free REST API: [agentwebmap.com/v1](https://agentwebmap.com/v1)
-- Current index counts: [coverage report](https://agentwebmap.com/coverage)
-- Reproducible evaluation: [benchmark report](https://agentwebmap.com/benchmarks), [runner and task dataset](../benchmarks/README.md)
+- Current index counts: [statistics page](https://agentwebmap.com/stats)
+- Reproducible evaluation: [benchmark report](https://github.com/AgentWebMap/mcp/blob/main/benchmarks/README.md), [runner and task dataset](../benchmarks/README.md)
 - Official project account: [x.com/AgentWebMap](https://x.com/AgentWebMap)
 
 Listing a publisher means its public file was discovered. It does not imply partnership, participation or endorsement. Ownership confirmation establishes domain control, not technical accuracy. A publisher-declared MCP endpoint does not establish availability or protocol compatibility.
 
 ## Manual adoption steps
 
-1. **Try one real task.** Use [discovery](https://agentwebmap.com/discover) or the free API with a publisher and task, such as `modelcontextprotocol authorization`. Read the returned original page and record whether it answered the question. Include failures and fallback steps.
+1. **Try one real task.** Use [discovery](https://agentwebmap.com/browse) or the free API with a publisher and task, such as `modelcontextprotocol authorization`. Read the returned original page and record whether it answered the question. Include failures and fallback steps.
 2. **Connect an existing client.** Follow the [MCP setup](../README.md#add-it) for Codex, Claude Code, Cursor or VS Code. Then repeat the real task and verify that the client actually called the tool. Tool availability alone is not usage.
 3. **Try a project workflow.** Preview the [dependency-aware CLI](discovery-cli.md), inspect its mappings and run the bounded lookups. Install the [optional discovery skill](../skills/agentwebmap-docs/SKILL.md) only when its workflow suits the project.
 4. **Keep existing distribution surfaces accurate.** Use the same description and endpoint on the GitHub repository, organization profile, existing MCP Registry entry and official X account. Link to the task demo, dated coverage and evaluation evidence instead of relying on a directory count alone.

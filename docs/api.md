@@ -1,130 +1,320 @@
-# Agent Web Map API
+# Agent Web Map: API and MCP documentation
 
-Base URL: `https://agentwebmap.com`. Public reads need no key. Errors are JSON with an `error` code and usually a `hint`. Cache responses according to their `Cache-Control` headers. The [live OpenAPI specification](https://agentwebmap.com/openapi.json) describes the currently deployed version; [`/v1`](https://agentwebmap.com/v1) lists the endpoints.
+Free public reads. Base URL: https://agentwebmap.com.
 
-## Start with resolve
+<a id="resolve"></a>
 
-`GET /v1/resolve?q=<domain or task>`
+## Find a source for a task
 
-Use a domain such as `modelcontextprotocol.io`, or a development task such as `modelcontextprotocol authorization`. A domain may include a scheme or path; subdomain lookup can fall back to the registrable domain. Task search includes titles, descriptions and section headings of links published in the indexed llms.txt, in addition to domain metadata. It does not search the full body of every linked page.
+Start with a publisher and a task, or an exact domain. Public reads need no API key.
 
-Use a specific publisher and task. Include the exact domain in ambiguous queries, such as `modelcontextprotocol.io authorization`. Try the [browser search](https://agentwebmap.com/discover), [dependency-aware CLI](discovery-cli.md), [coverage](https://agentwebmap.com/coverage) and [measured results](https://agentwebmap.com/benchmarks).
-
-| Parameter | Default | Meaning |
-|---|---|---|
-| `q` | required | Domain, vendor and task, or topic |
-| `category` | none | Optional category ID from `/v1/categories`; restricts the candidate domains |
-| `capability` | none | `mcp` restricts discovery to publisher-declared MCP endpoint links; availability is unverified |
-| `detail` | `compact` | `compact` for consumers, `full` for expanded directory and owner information |
-| `limit` | `3` | Number of documentation sources, from 1 to 5 |
-| `max_age` | `86400` | Acceptable check age in seconds, from 0 to 2592000; older results are marked stale |
-| `refresh` | `false` | `true` performs a live llms.txt check using the validation tool |
-
-```bash
-curl --get --fail-with-body https://agentwebmap.com/v1/resolve \
-  --data-urlencode "q=modelcontextprotocol authorization" \
-  --data-urlencode "limit=3" \
-  --data-urlencode "max_age=3600"
+```sh
+curl 'https://agentwebmap.com/v1/resolve?q=modelcontextprotocol%20authorization&limit=3'
 ```
 
-The MCP equivalent is `resolve` with `{"query":"modelcontextprotocol authorization","limit":3,"max_age":3600}`. REST uses `q`; MCP uses `query`.
+Read `best`, `sources`, `match.strength` and `health.stale`, then fetch the linked publisher pages. Source excerpts come from publisher link titles, descriptions and headings; they are not the full text of those pages. Weak matches need a more specific query or broader search.
 
-A successful response contains:
+| Parameter | Meaning |
+| --- | --- |
+| `q` | Domain, URL or task; required, up to 200 characters |
+| `detail` | `compact` (default) or `full`, which adds owner/profile details |
+| `limit` | 1–5 documentation targets; default 3 |
+| `max_age` | Acceptable check age in seconds; 0–2592000, default 86400 |
+| `refresh` | `true` performs a bounded live llms.txt check for this response |
+| `category`, `capability`, `agentic` | Optional filters, combined with AND |
+
+`health.stale` marks old checks without hiding them. A live refresh checks llms.txt, not every linked page, and does not update the stored index. Missing owner terms mean unknown. A topic with no match returns `404`, `error: "no_match"` and `best: null`; discovery does not require registering the missing site.
+
+<a id="search"></a>
+
+## Search and browse
+
+Use [Browse](https://agentwebmap.com/browse) or the same search through REST and MCP. Search combines keyword matches with meaning-based matches when available, removes duplicates and ranks relevance before verification and authority. If semantic search is unavailable, keyword search still works. Listings without a query use verified-first authority ordering.
+
+```sh
+curl 'https://agentwebmap.com/v1/search?q=event%20delivery%20retries&per_page=10'
+curl 'https://agentwebmap.com/v1/domains?category=developer-tools&agentic=interface'
+curl 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io'
+```
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /v1/search?q=…` | Query, page, per_page, total and matching results |
+| `GET /v1/domains` | Ranked listings; also accepts `q` |
+| `GET /v1/domain/{domain}` | One domain’s file URLs, summary, categories, agentic label and check date |
+| `GET /v1/categories` | Taxonomy, overlapping counts, declared capabilities and agentic counts |
+| `GET /v1/stats` | Directory counts |
+| `GET /v1/map` | Valid sites by inferred country |
+
+Search and list accept `page` (default 1), `per_page` (default 10, maximum 100), `verified=true`, `detail` and the filters below. There is no discovery result-window quota; continue through pages or refine your query. `include_unlisted=true` requires an approved client with that permission. MCP uses `verified_only` for the verified filter. Browse uses 25 rows per page and shares the same ranking.
+
+<a id="sections"></a>
+
+## Publisher sections and connections
+
+Explore [the section cloud](https://agentwebmap.com/explore) or query the same growing catalogue through REST and MCP. Labels are extracted from indexed publisher headings without a fixed topic list or paid AI classification. Formatting and case are normalized; original headings, hierarchy, source files and lines remain available. Different words are not automatically treated as synonyms.
+
+| Endpoint / tool | Returns |
+| --- | --- |
+| GET /v1/sections · list_sections | Section keys, labels, unique-site counts, first observation, emerging dates, seven-day changes and coverage |
+| GET /v1/section-graph · explore_sections | Up to 36 section clusters, their strongest 180 connections and a bounded page of matching publishers |
+
+Start with `GET /v1/sections?sort=common&per_page=20`. Substitute returned keys in `GET /v1/section-graph?sections=SECTION_KEY&include_sites=false` or `GET /v1/domains?sections=FIRST_KEY,SECOND_KEY&section_match=all`.
+
+Catalogue options: `q` (word-prefix search), `sort=common|alphabetical|emerging`, `page`, `per_page` (1–100, default 36), and optional `sections` / `section_match` to find co-occurring labels. Graph options: up to five `sections`, `section_match=all|any`, `page`, `per_page` (default 50) and `include_sites=false` for aggregate-only refreshes. REST accepts comma-separated keys; MCP accepts an array. Standard pagination limits apply.
+
+Search, list and Browse accept these section filters alongside category and agentic filters. Compact domain results add `section_keys`, `section_partial` and `section_indexed_at`. Full detail adds `section_headings`: original label, key, level, path, source URL, line (null for older link metadata) and parsing format. Heading presence describes published content and does not certify a capability.
+
+Counts include each valid, listed, unblocked domain once per label. Repeated headings do not inflate counts. Graph edges count sites carrying both labels within the selection; `strength` is overlap divided by the square root of the two label counts. Positions are an approximate visual layout, not a ranking or publisher affiliation. Root graphs contain aggregates. Publisher reads are measured for operator review without automatic quotas; metadata-only refreshes return no publisher records.
+
+Root files are parsed independently of sampled links, up to 512 KiB of characters and 512 headings. Size limits, incomplete copies and nested/legacy link-only evidence are marked partial. `coverage` reports indexed and eligible sites, partial sites, pending files and baseline status. A missing label on an incompletely indexed site does not prove the publisher lacks that content.
+
+New files, file edits and indexed metadata changes enter a durable extraction queue. Broken files, blocks and tier changes update memberships automatically. `first_seen` means first observed by this catalogue, not first published. `emerging` shows labels first observed after the initial backfill finished; initial backfill labels are excluded. `change_7d` is net unique-site membership growth after the baseline. Cached views can lag by about a minute.
+
+<a id="categories"></a>
+
+## Categories, capabilities and agentic labels
+
+Get category IDs from [GET /v1/categories](https://agentwebmap.com/v1/categories). A site can have several categories or remain uncategorized. Categories describe topics. `capability=mcp` requires a qualifying publisher-declared MCP endpoint; the declaration does not certify endpoint availability or protocol compatibility.
+
+The `agentic` field summarizes what an agent may find at the site. These inferred labels help discovery; read the publisher’s documentation and terms before acting.
+
+| Value | Meaning |
+| --- | --- |
+| `interface` | a documented API or declared MCP endpoint an agent can call |
+| `transactional` | buying or booking an agent could carry out |
+| `documentation` | developer or product docs worth reading, nothing to call |
+| `informational` | content or services for people, nothing to operate |
+
+Filter search, list and resolve with `agentic=interface`, `transactional`, `documentation` or `informational`. Unlabelled sites have `agentic: null`. Filters combine with AND. Invalid filter values return `400`; an exact-domain resolve outside the selected filters returns `404 no_match`. Use `detail=full` for category and capability evidence.
+
+<a id="files"></a>
+
+## Read cached files
+
+Read our validated copy of a publisher’s llms.txt without another request to the publisher.
+
+```sh
+curl -i 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io/llms.txt'
+```
+
+The response is `text/plain`, with `X-Source-URL`, `X-Checked-At`, `X-Content-Hash` and `X-Truncated` headers. A size-limited copy is marked as truncated. The MCP tool `read_llms_txt` returns the content inline with the same metadata. Files not yet cached are fetched on demand with bounded work per call. Invalid files return `409`; unavailable copies return an error rather than an invented file.
+
+[Our llms.txt](https://agentwebmap.com/llms.txt) describes this service. [Our llms-full.txt](https://agentwebmap.com/llms-full.txt) lists valid sites whose owners have verified their domains, with their file links and summaries. The full searchable directory remains available through the API.
+
+<a id="statistics"></a>
+
+## Directory statistics
+
+[Statistics](https://agentwebmap.com/stats) and [stats.json](https://agentwebmap.com/stats.json) describe the index, updated hourly: listed sites, llms-full.txt availability, additions by day, categories, inferred country, language and file sizes.
+
+These figures measure this index, not all websites. Additions record when a valid file entered the index, not the publisher’s adoption date. Category counts overlap; country inference may reflect hosting location. Cite the statistics URL and `generated_at` date when reusing figures.
+
+<a id="mcp"></a>
+
+## MCP server
+
+Connect to `https://agentwebmap.com/mcp` using stateless Streamable HTTP. Public reads need no key. Owner tools take the domain-scoped `api_key` as an argument. Discovery metadata: [/.well-known/mcp.json](https://agentwebmap.com/.well-known/mcp.json).
+
+### Codex
+
+```sh
+codex mcp add agentwebmap --url https://agentwebmap.com/mcp
+```
+
+### Claude Code
+
+```sh
+claude mcp add --transport http agentwebmap https://agentwebmap.com/mcp
+```
+
+### Cursor
+Save in `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "agentwebmap": {
+      "url": "https://agentwebmap.com/mcp"
+    }
+  }
+}
+```
+
+### VS Code
+Save in `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "agentwebmap": {
+      "type": "http",
+      "url": "https://agentwebmap.com/mcp"
+    }
+  }
+}
+```
+
+### Available tools (19)
+
+| Tool | Purpose |
+| --- | --- |
+| `list_sections` | Discover publisher section labels across the indexed corpus, distinct-site counts, new labels and seven-day membership changes |
+| `explore_sections` | Explore relationships between publisher headings |
+| `resolve` | Start here to find documentation for a domain or development task |
+| `directory_stats` | Directory-wide counts for Agent Web Map: domains tracked, valid llms.txt files, listed, verified, pending. |
+| `list_categories` | List topic taxonomy and counts by inferred category and agentic label, unclassified sites and publisher-declared MCP endpoints |
+| `search_llms_registry` | Search domains and indexed documentation links by words and meaning |
+| `list_domains` | Ranked listing of the directory (verified first, then authority) |
+| `lookup_domain` | Look up a domain: source URLs, summary, authority, ownership verification, last check and owner-stated terms |
+| `read_llms_txt` | Return our validated copy of a listed site's llms.txt as text, with its source URL, check date and content hash |
+| `verification_instructions` | Describe optional ownership management and its four proof methods |
+| `check_llms_txt` | Validate a site's llms.txt: reachability, HTML-instead-of-text, redirects to other domains, H1 title, summary, sections, links, link health, llms-full.txt and charset |
+| `generate_llms_txt` | Draft an llms.txt for a site from its own homepage, sitemap and page titles |
+| `register_domain` | Submit a domain that publishes an llms.txt so it gets crawled and indexed |
+| `begin_ownership_claim` | Start optional ownership management or recovery for a domain you control |
+| `verify_domain` | Complete the fresh challenge from begin_ownership_claim using its private claim credentials |
+| `rotate_owner_key` | Owner only |
+| `update_site` | Verified owner only |
+| `site_stats` | Verified owner only |
+| `recrawl_site` | Verified owner only |
+
+
+```sh
+curl -X POST 'https://agentwebmap.com/mcp' -H 'content-type: application/json' -H 'accept: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"read_llms_txt","arguments":{"domain":"modelcontextprotocol.io"}}}'
+```
+
+Tools publish input/output schemas and behavior annotations. Annotations describe effects; they do not grant authorization. [Optional discovery skill](https://github.com/AgentWebMap/mcp/tree/main/skills/agentwebmap-docs) and [dependency discovery CLI](https://github.com/AgentWebMap/mcp/blob/main/docs/discovery-cli.md).
+
+<a id="why-verify"></a>
+
+## Verify to manage your listing
+
+Verify your domain to control its listing and see activity through Agent Web Map. The [private owner dashboard](https://agentwebmap.com/manage) brings together listing controls, file health, on-demand rechecks, daily discovery activity and score history. Return to the dashboard to review the latest results. API and MCP clients can use the same owner operations.
+
+Listings and public discovery are usable without verification. Ownership confirmation proves domain control.
+
+- A private owner dashboard to control your listing and review activity through Agent Web Map
+- Edit your description, tags, nested llms.txt files and public contact information
+- Publish your terms for agents: automated access, rate limits, attribution and pricing
+- Review file health and request a fresh check on demand
+- See measured web, REST and MCP requests, documentation selections, publisher clicks and recent daily activity
+- Review score history over time; request counts do not identify unique agents or confirm publisher page reads
+- Domain ownership confirmation shown separately from content quality or endorsement
+
+An owner’s coding agent may complete verification on their behalf when authorized to manage that domain. Publish only the public proof; keep claim credentials and API keys private.
+
+<a id="submit"></a>
+
+## Submit a site
+
+Publish a public llms.txt, then submit the domain for crawling. Verification is optional.
+
+```sh
+curl -X POST 'https://agentwebmap.com/v1/sites' -H 'content-type: application/json' -d '{"domain":"example.com"}'
+```
+
+Returns `202` when queued or `200` for an existing domain. The response includes public verification guidance.
+
+<a id="verify"></a>
+
+## Verify domain ownership
+
+Start a fresh claim. This also creates the domain record if needed, so an existing publisher can verify in two API calls with a proof publication between them.
+
+```sh
+curl -X POST 'https://agentwebmap.com/v1/sites/example.com/claims'
+```
+
+Keep `claim_id` and `claim_secret` private. Publish the returned `verification.token` using one of its snippets: llms.txt, DNS TXT, a homepage meta tag or a well-known file. Then complete the claim:
+
+```sh
+curl -X POST 'https://agentwebmap.com/v1/sites/example.com/verify' \
+  -H 'content-type: application/json' -d '{"claim_id":"...","claim_secret":"..."}'
+```
+
+MCP uses `begin_ownership_claim`, then `verify_domain`. The claim expires after 30 minutes and succeeds only once. Success returns a domain-scoped API key, shown once. A failed proof returns `422`; fix it and retry before expiry. Public proofs alone cannot issue keys. Keep the successful proof published: checks recur and verification lapses after 14 days of continuous failure.
+
+`GET /v1/sites/{domain}/verification` describes methods without private credentials. Recover a lost owner key with a fresh claim and proof. Authenticated `POST /v1/sites/{domain}/key` or `rotate_owner_key` replaces a key and invalidates old keys, browser sessions and pending claims.
+
+<a id="manage"></a>
+
+## Manage a verified listing
+
+Use `Authorization: Bearer <api_key>` for REST owner endpoints.
+
+| Endpoint | Action |
+| --- | --- |
+| `PATCH /v1/sites/{domain}` | Edit description, tags, nested_llms_txt, contact and agent_terms; null clears a field |
+| `GET /v1/sites/{domain}/stats` | Measured usage by surface, daily activity, file health, score history and badge |
+| `POST /v1/sites/{domain}/recrawl` | Revalidate now; once per 10 minutes |
+| `POST /v1/sites/{domain}/key` | Rotate the owner key; replacement shown once |
+
+
+```sh
+curl -X PATCH 'https://agentwebmap.com/v1/sites/example.com' \
+  -H 'authorization: Bearer awm_key_...' -H 'content-type: application/json' \
+  -d '{"description":"Publisher documentation","tags":["docs"],"nested_llms_txt":["/docs/llms.txt"]}'
+```
+
+Description: up to 500 characters. Tags: up to 10 lowercase slugs. Nested paths: up to 20 same-site paths ending in .txt or .md. Usage measures requests, including bots, tests and repeats; it does not count unique agents or prove that returned publisher pages were read.
+
+<a id="agent-terms"></a>
+
+## Publish terms for agents
+
+Set an `agent_terms` object with the owner PATCH endpoint. These owner-stated terms appear in listings and resolve responses. Missing terms remain unknown.
 
 | Field | Meaning |
-|---|---|
-| `query`, `mode` | Input query and domain/topic routing |
-| `best` | Best matching domain, with metadata and match reasons |
-| `sources` | Relevant documentation links, bounded by `limit` |
-| `sources[].url`, `title` | Original documentation URL and published title |
-| `sources[].excerpt` | Matching publisher-provided description or section context from llms.txt, not a fetched quotation from the linked page |
-| `sources[].source_url` | The llms.txt from which the entry was indexed |
-| `sources[].match_score` | Relative match strength, not a probability or proof of correctness |
-| `sources[].checked_at`, `content_hash` | Check time and fingerprint of the indexed source; these do not certify every linked page |
-| `read` | llms.txt, llms-full.txt and any nested llms.txt URLs |
-| `terms` | Owner-published agent terms, or `null` when unknown |
-| `health` | Source status, last check time, `stale` against `max_age`, and `live_checked` identifying a live check |
-| `alternatives` | Other matching domains |
+| --- | --- |
+| `automated_access` | one of welcome / limited / ask / not_allowed: may agents use the site automatically? |
+| `rate_limit` | short text, e.g. "60 requests/minute" |
+| `attribution` | one of required / appreciated / none |
+| `attribution_text` | how to credit the site (≤200 chars) |
+| `pricing` | one of free / freemium / paid |
+| `pricing_url` | where prices are published |
+| `terms_url` | the full terms for automated use |
+| `notes` | anything else an agent should know (≤500 chars) |
 
-Read the returned documentation URL before relying on its current instructions. Authority and verification indicate directory signals and domain control; search relevance comes first. `match.strength=weak` means publisher or task evidence is insufficient. Inspect `match.reason`: a weak result may be an indexed publisher without the task page, or a third-party fallback with source URLs. Weak matches may return `200` without useful sources: refine the query or fall back rather than treating `best` as definitive.
+<a id="tools"></a>
 
-An unknown domain returns `404` with suggested check/register endpoints; a topic without a match returns `404` with `error: "no_match"`, `best: null` and a search suggestion. Discovery alone is not a reason to register a site.
+## Check or generate llms.txt
 
-`max_age` marks freshness; it does not force a recrawl or hide old results. `refresh=true` checks llms.txt live and returns the live health and link metadata for this response, without updating the stored index or reading the full text of documentation pages. Refresh is bounded to 20 requests per ten minutes per client and one probe per minute per domain. Inspect `health.ok`, `health.stale` and `health.live_checked` when current evidence matters. Individual source metadata retains its own timestamps; a fresh llms.txt check does not certify destination page health.
+| Endpoint | Action |
+| --- | --- |
+| `GET /v1/check/{domain}` | Live validation with diagnostics and preview; MCP: check_llms_txt |
+| `GET /v1/generate/{domain}` | Draft from homepage, sitemap and page titles; MCP: generate_llms_txt |
 
-## Reading the directory
+The browser [checker](https://agentwebmap.com/check) and [generator](https://agentwebmap.com/generate) use the same operations. Review a generated draft before publishing it. Validation and generation do not submit the site automatically.
 
-| Endpoint | Returns |
-|---|---|
-| `GET /v1/stats` | Directory-wide counts |
-| `GET /v1/domains?page=&per_page=&verified=&include_unlisted=&category=&capability=` | Browsable listing ordered by directory signals; verified owners first; optional category/capability filters |
-| `GET /v1/search?q=…&page=&per_page=&detail=&category=&capability=` | Search ranked by relevance before authority and verification; default 10 results per page, maximum 100; optional category/capability filters |
-| `GET /v1/categories` | Taxonomy version, category IDs/descriptions/counts, uncategorized count and publisher-declared capabilities |
-| `GET /v1/domain/{domain}?detail=compact` | Domain metadata without owner claim instructions |
-| `GET /v1/domain/{domain}?detail=full` | Expanded domain details, including verification instructions for an unverified owner |
-| `GET /v1/map` | Sites with a valid llms.txt per country |
-| `GET /badge/{domain}.svg` | Status badge |
+<a id="badge"></a>
 
-Compact domain metadata includes `domain`, `status`, `tier`, `authority`, `verified`, `categories`, `capabilities`, llms URLs, `title`, `summary`, `agent_terms` and `last_checked`. Expanded details include descriptions, tags, nested URLs, enrichment signals, badge and owner information. `detail=full` includes the optional `claim` block for unverified domains, `category_evidence`, `category_version`, `categorized_at` and `capability_evidence`. See the OpenAPI schemas for exact fields.
+## Directory badge
 
-Category labels come from versioned rules over publisher metadata and can be empty when evidence is insufficient. Use MCP `list_categories` or the REST taxonomy before choosing a `category` filter. `capability=mcp` requires an explicit qualifying endpoint link and is a publisher declaration, not verified availability. See [categories.md](categories.md) for confidence/evidence semantics and endpoint validation limits.
+`GET /badge/{domain}.svg` returns a current status badge. Owners can embed it with a link to their listing; a backlink is optional.
 
-Filters combine with AND and also apply to domain-only resolve. A known domain that fails a selected filter produces `404 no_match`; invalid or empty category/capability IDs produce `400`. Taxonomy counts cover unblocked listed/featured domains and overlap for multi-label sites.
+```html
+<a href="https://agentwebmap.com/domain/example.com"><img src="https://agentwebmap.com/badge/example.com.svg" alt="Agent Web Map listing"></a>
+```
 
-Domain pages at `/domain/{domain}` also support `Accept: application/json` and `Accept: text/markdown`.
 
-## Validation and generation
+<a id="negotiation"></a>
 
-| Endpoint | Returns |
-|---|---|
-| `GET /v1/check/{domain}` | Live llms.txt validation, diagnostics and preview |
-| `GET /v1/generate/{domain}` | Draft llms.txt from the site's homepage, sitemap and page titles (may take 10–30 seconds) |
+## Machine-readable pages
 
-## Watching a domain
+Domain pages support `Accept: application/json` and `Accept: text/markdown`. Browse supports JSON. These docs support `Accept: text/markdown`, or use [docs.md](https://agentwebmap.com/docs.md) directly. [OpenAPI](https://agentwebmap.com/openapi.json) describes REST request and response schemas; [GET /v1](https://agentwebmap.com/v1) lists discovery links and endpoints.
 
-| Endpoint | Auth | Effect |
-|---|---|---|
-| `POST /v1/watch` `{"domain","webhook_url"}` | none | Subscribe; returns `watch_id` and a secret shown once |
-| `POST /v1/watch/{id}/test` | `Authorization: Bearer <secret>` | Send a test event |
-| `DELETE /v1/watch/{id}` | `Authorization: Bearer <secret>` | Unsubscribe |
+<a id="limits"></a>
 
-See [webhooks.md](webhooks.md) for events and signatures. Limits: 20 new watches per hour per client, 5 active per domain per client; ten consecutive failed deliveries disable a watch.
+## Access, monitoring and errors
 
-## Listing and optional ownership management
+Public discovery is free and needs no account or API key. There are no automatic daily request, returned-record, distinct-domain, byte or result-window quotas for website, REST or MCP discovery. High activity creates an operator review alert; it does not automatically deny access. An operator can explicitly block a particular source network or client. A manual block returns `403 access_blocked`.
 
-Automatic listing and public API/MCP access do not require ownership confirmation. To manage a listing in the browser, open [`/manage`](https://agentwebmap.com/manage), enter your domain and follow the ownership check. The dashboard supports profile and agent-term edits, breakage alerts, request statistics and owner-key rotation. Email alerts are available only when the deployment has email delivery configured; webhooks are supported separately. No account or backlink is required.
+We record source network addresses, self-reported agent names, operations and returned-record counts for service operations and abuse review. Detailed activity is retained for 7 days and daily usage for 30 days. IPv6 sources share a /64 identity. Credentials and query text are excluded. These observations describe requests and networks, not verified people.
 
-| Endpoint | Auth | Effect |
-|---|---|---|
-| `POST /v1/sites` `{"domain":"example.com"}` | none | Submit a domain for checking and read the available ownership methods |
-| `GET /v1/sites/{domain}/verification` | none | Read public methods and the claim endpoint; no private claim credential or reusable issuance token is returned |
-| `POST /v1/sites/{domain}/claims` | none | Start a fresh claim; returns `claim_id`, private `claim_secret`, `expires_at` and `verification.token` with proof snippets |
-| `POST /v1/sites/{domain}/verify` `{"claim_id":"…","claim_secret":"…"}` | private claim credentials in JSON body | Check the fresh proof and consume the claim once; on success return the owner API key, shown once |
+An optional operator-issued client key identifies an integration. Send `Authorization: Bearer awm_client_…` or `X-AgentWebMap-Key: awm_client_…` on API and MCP requests. Owner keys manage one listing and are separate. Invalid or revoked client keys return `401`; omit the key for public discovery.
 
-Publish only the fresh `verification.token` using one of the returned methods: an llms.txt line, DNS TXT record, homepage meta tag or well-known file. Keep the claim ID/secret private and submit them in the JSON body. Claims expire after 30 minutes and cannot be reused after success. A failed proof check returns `422` with the checked methods; correct the proof and retry before expiry. Starting a recovery claim leaves the current owner key working until the fresh proof succeeds. See [ownership.md](ownership.md) and the [shell example](../examples/verify-site.sh).
+Responses use `X-AgentWebMap-Access: monitor` and `Cache-Control: private, no-store`. Each page contains at most 100 records. MCP accepts at most 10 messages per batch, and oversized requests are rejected before execution. Unlisted enumeration still requires explicit permission, and bulk export remains disabled unless separately enabled for an approved client. Automated collection to reproduce or redistribute the directory requires prior written approval. Publisher content remains subject to its publisher’s terms.
 
-Successful confirmation proves domain control, without endorsing content quality. Keep the successful public proof published: it is rechecked over time, and ownership lapses after 14 days of continuous failure. Search relevance comes first. Existing verified-first browse ordering and the ownership contribution to authority remain directory ranking signals; they are not a prerequisite for listing or access.
-
-**0.7 owner-flow migration:** `/verify` now requires fresh claim credentials; calling it without them, or presenting an old public token alone, cannot issue an API key. Existing owner API keys remain valid, and existing public proofs continue to work for periodic rechecking. A new claim is required when recovering a lost key. Public discovery endpoints do not require this migration.
-
-## Owner endpoints
-
-Use `Authorization: Bearer <api_key>`.
-
-| Endpoint | Effect |
-|---|---|
-| `PATCH /v1/sites/{domain}` | Edit `description`, `tags`, `nested_llms_txt`, `contact`, `agent_terms`, `webhook_url` and `notify_email`; `null` clears a field |
-| `GET /v1/sites/{domain}/stats` | Read aggregate `usage`, the separate historical `lookups` counter, scores, recent notifications and badge |
-| `POST /v1/sites/{domain}/recrawl` | Revalidate now (once per 10 minutes) |
-| `POST /v1/sites/{domain}/notify/test` | Send a test notification |
-| `POST /v1/sites/{domain}/key` | Return a replacement API key once; immediately invalidate the previous key, browser owner sessions and pending claims |
-
-Terms are specified in [agent-terms.md](agent-terms.md). A missing term is unknown. Check the original site's current terms and access rules before automated retrieval.
-
-The stats `usage` object reports `measurement_started_at`, the UTC reporting window, per-surface `requests`, `active_days`, `documentation_selections`, `referrals`, event totals and daily aggregates. These are request volumes, including possible bots, tests and repeated calls. Documentation selections mean returned links, without confirming destination reads. Active days count dates with requests rather than returning individuals. The historical `lookups` counter has mixed origins and is not backfilled into the new measurement. See [measurement.md](measurement.md) for limits and retention.
-
-## Limits and MCP
-
-Registration: 10/hour per client. Claim creation and verification each allow 30/hour per client and 10/hour per domain. Live check: 20 per 10 minutes. Generation: 5 per 10 minutes. Watches: 20/hour. MCP: 120 calls/minute. Cache repeat reads and back off on `429`.
-
-The same operations are MCP tools at `https://agentwebmap.com/mcp`. For ownership, call `begin_ownership_claim` with `domain`, publish the returned proof, then call `verify_domain` with `domain`, `claim_id` and `claim_secret`. Protected owner tools take `domain` and `api_key`; `rotate_owner_key` replaces that key. Tools include output schemas and operation annotations; annotations describe behavior and are not authorization. See [client configuration](../README.md#add-it), [task examples](task-examples.md), and the [benchmark](../benchmarks/README.md).
+Ownership checks, registration and sign-in retain their workflow safeguards. Live source probes are coalesced for a minute per domain; cached directory discovery remains available. Errors are JSON with an `error` code and usually a `hint`. Common statuses: `400` invalid input, `401` missing/bad credentials, `403` manual block or private-data permission required, `404` missing listing or no match, `409` unavailable valid file or changed ownership, `413` oversized request or MCP batch, `422` proof not found, `429` protected workflow throttle, `502` publisher fetch failure. Respect owner terms and the source site’s access rules.

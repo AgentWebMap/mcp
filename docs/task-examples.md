@@ -69,7 +69,7 @@ Inspect `capability_evidence` for the declared endpoint URL, original llms.txt a
 {"name":"resolve","arguments":{"query":"cloudflare workers bindings","max_age":3600,"refresh":true,"limit":3}}
 ```
 
-Inspect `health.ok`, `health.stale` and `health.live_checked`. Refresh returns live llms.txt health and metadata; it does not rewrite the stored index or verify every linked page. Fetch the relevant Cloudflare page and confirm its current API details. Cache successful reads and respect validation rate limits.
+Inspect `health.ok`, `health.stale` and `health.live_checked`. Refresh returns live llms.txt health and metadata; it does not rewrite the stored index or verify every linked page. Fetch the relevant Cloudflare page and confirm its current API details. Cache successful reads and respect the publisher's access rules.
 
 ## Handle missing or uncertain results
 

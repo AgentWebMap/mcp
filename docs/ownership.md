@@ -1,6 +1,6 @@
 # Optional listing management
 
-Sites can be discovered, crawled and listed without an account, ownership confirmation or a backlink. Public REST/MCP discovery remains free of owner credentials. Ownership confirmation lets a publisher edit its profile, publish terms for agents, configure breakage alerts and inspect measured usage. It confirms control of a domain, without endorsing the site's content.
+Sites can be discovered, crawled and listed without an account, ownership confirmation or a backlink. Public REST/MCP discovery remains free of owner credentials. Ownership confirmation lets a publisher edit its profile, publish terms for agents, recheck file health and inspect measured activity and score history. It confirms control of a domain, without endorsing the site's content.
 
 ## Use the browser
 
@@ -9,9 +9,9 @@ Sites can be discovered, crawled and listed without an account, ownership confir
 3. Choose **Check ownership** in the same browser. If a website cache or DNS update has not propagated, the page shows which checks found the proof; retry after the update is visible. A challenge expires after 30 minutes. Start a fresh check and publish its new token if the previous one expires.
 4. Save the owner API key shown after success. The browser also signs you into the owner dashboard. The key is displayed once, with copy and download controls.
 
-The dashboard supports profile descriptions, tags, contact information, nested llms.txt paths and structured agent terms. It shows recent checks and notifications, provides a recrawl action and lets you configure a webhook for change/breakage alerts. Email settings appear only when email delivery is configured on the deployment. Send a test notification to confirm your selected channel works.
+The dashboard supports profile descriptions, tags, contact information, nested llms.txt paths and structured agent terms. It shows current file health, measured website/REST/MCP requests, documentation selections and publisher clicks. Return to review daily discovery activity and the last 30 score snapshots, or request a fresh directory check with **Recheck llms.txt now** (once per 10 minutes).
 
-Usage separates web, REST and MCP request volumes, documentation selections and publisher referrals. These are aggregate events, including possible bots, tests and repeated calls. They do not establish unique agents, confirmed publisher-page reads or individual return visits. See [measurement.md](measurement.md) for the reporting window and limits.
+Usage separates web, REST and MCP request volumes, documentation selections and publisher referrals. These are aggregate events, including possible bots, tests and repeated calls. They do not establish unique agents, confirmed publisher-page reads or individual return visits. See [the live owner reference](https://agentwebmap.com/docs#manage) for reporting details. Listing health and activity are reviewed in the dashboard; outbound owner notifications have been retired.
 
 Browser sessions expire after 12 hours. Sign back in with the saved owner API key. Sign out on shared devices; key rotation or successful ownership recovery invalidates older browser sessions.
 
@@ -41,7 +41,7 @@ A successful response returns the owner `api_key` once and consumes the claim. T
 
 For MCP, call `begin_ownership_claim` with `domain`, publish the returned proof and call `verify_domain` with `domain`, `claim_id` and `claim_secret`. Keep private arguments out of public transcripts and logs. Discovery does not require either ownership tool.
 
-Protected owner REST operations use `Authorization: Bearer <api_key>`. MCP owner tools use `domain` and `api_key` arguments. See [api.md](api.md) for profile updates, stats, recrawling and notifications.
+Protected owner REST operations use `Authorization: Bearer <api_key>`. MCP owner tools use `domain` and `api_key` arguments. See [api.md](api.md) for profile updates, measured activity, score history and rechecks.
 
 ## Replace or recover an owner key
 
@@ -49,7 +49,7 @@ With a working key, use **Replace owner API key** in the dashboard, `POST /v1/si
 
 If the key is lost, start a fresh ownership check and publish its new proof. Merely starting recovery leaves the current key valid. Successful proof completion replaces the previous key and invalidates previous sessions and pending claims. Seeing or copying an old public proof does not authorize recovery.
 
-Keep the successful public proof published so the crawler can recheck domain control. Ownership lapses after 14 days of continuous proof failure. That removes owner access; ordinary automatic listing and public discovery do not require a claimed profile. Alerts can report proof failures as well as llms.txt breakage.
+Keep the successful public proof published so the crawler can recheck domain control. Ownership lapses after 14 days of continuous proof failure. That removes owner access; ordinary automatic listing and public discovery do not require a claimed profile. Review current verification and file health in the dashboard.
 
 ## Migration from versions before 0.7
 
@@ -57,4 +57,4 @@ Existing owner API keys remain valid, and existing public proofs continue to sup
 
 Ownership completion changed: a bare `POST /verify` or `verify_domain` call no longer issues a key. New clients must start a fresh claim and send its private credentials with the proof check. If recovering access, replace the old public proof with the fresh challenge's snippet. The fresh challenge is single-use and expires; it does not expose a reusable public key-issuance mechanism.
 
-Search continues to prioritize relevance. Confirmed owners still lead browse listings, contribute 15 authority points and have the existing lower featured threshold. These directory signals are separate from content correctness; profile management, useful source links, measured request volumes and reliable alerts are the practical reasons to manage a listing.
+Search continues to prioritize relevance. Confirmed owners still lead browse listings, contribute 15 authority points and have the existing lower featured threshold. These directory signals are separate from content correctness; profile management, useful source links, measured request volumes, file health and score history are the practical reasons to manage a listing.

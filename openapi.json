@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.8.2",
-    "description": "AgentWebMap indexes websites publishing llms.txt and helps AI agents find publisher documentation through a free JSON API and MCP server, with source links, matching evidence, check dates and change notifications. Reads need no key. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
+    "version": "0.11.1",
+    "description": "Agent Web Map is the directory of websites publishing llms.txt: found across the web, validated continuously and ranked by authority, with a free JSON API and MCP server so AI agents can look any site up. Public discovery has no automatic daily or pagination quotas. Usage is monitored; only explicit operator source blocks deny discovery access. Optional integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
     }
@@ -14,6 +14,129 @@
     }
   ],
   "paths": {
+    "/stats.json": {
+      "get": {
+        "operationId": "adoptionStatistics",
+        "summary": "Hourly statistics describing the directory index",
+        "description": "Counts and daily additions within this index, not a census of the web or publisher adoption dates. Category counts overlap.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "generated_at",
+                    "totals",
+                    "growth",
+                    "categories",
+                    "agentic",
+                    "countries",
+                    "languages",
+                    "files"
+                  ],
+                  "properties": {
+                    "generated_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "totals": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "growth": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "day": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "n": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    },
+                    "agentic": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "countries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "country": {
+                            "type": "string"
+                          },
+                          "n": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    },
+                    "languages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "lang": {
+                            "type": "string"
+                          },
+                          "n": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    },
+                    "files": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": [
+                          "number",
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1": {
       "get": {
         "operationId": "apiIndex",
@@ -131,7 +254,33 @@
                 "food-dining",
                 "automotive",
                 "government-public-services",
-                "science-research"
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
               ]
             },
             "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
@@ -146,6 +295,20 @@
               ]
             },
             "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          },
+          {
+            "name": "agentic",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "interface",
+                "transactional",
+                "documentation",
+                "informational"
+              ]
+            },
+            "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
           },
           {
             "name": "max_age",
@@ -165,7 +328,7 @@
               "type": "boolean",
               "default": false
             },
-            "description": "Validate the selected source live. Rate limited to 20 per 10 minutes per client, cached/coalesced for 60 seconds per domain."
+            "description": "Validate the selected source live. Probes are cached/coalesced for 60 seconds per domain."
           },
           {
             "name": "limit",
@@ -192,6 +355,16 @@
           },
           "400": {
             "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
             "content": {
               "application/json": {
                 "schema": {
@@ -250,44 +423,100 @@
         }
       }
     },
-    "/v1/watch": {
-      "post": {
-        "operationId": "watchDomain",
-        "summary": "Subscribe to signed change and breakage events",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "domain",
-                  "webhook_url"
-                ],
-                "properties": {
-                  "domain": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 253
-                  },
-                  "webhook_url": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "pattern": "^https?://"
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
+    "/v1/stats": {
+      "get": {
+        "operationId": "getStats",
+        "summary": "Directory-wide counts",
         "responses": {
-          "201": {
-            "description": "Subscribed; store the secret",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Watch"
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sections": {
+      "get": {
+        "operationId": "listSections",
+        "summary": "Publisher heading catalogue, distinct-site counts, emerging labels and coverage",
+        "description": "Labels come from the indexed corpus. Emerging excludes the initial backfill. Seven-day changes count net site memberships after the baseline; headings do not certify capabilities.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "common",
+                "alphabetical",
+                "emerging"
+              ],
+              "default": "common"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 36
+            }
+          },
+          {
+            "name": "sections",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 605
+            },
+            "description": "Up to five comma-separated publisher section keys from GET /v1/sections. Independent of business categories."
+          },
+          {
+            "name": "section_match",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ],
+              "default": "all"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionCatalogue"
                 }
               }
             }
@@ -302,146 +531,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limited",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Capacity reached",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watch/{id}": {
-      "delete": {
-        "operationId": "unwatchDomain",
-        "summary": "Cancel a watch",
-        "security": [
-          {
-            "watchSecret": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Unwatch"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Bad or missing credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watch/{id}/test": {
-      "post": {
-        "operationId": "testWatch",
-        "summary": "Send a test event to the watch webhook",
-        "security": [
-          {
-            "watchSecret": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Bad or missing credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "410": {
-            "description": "Watch inactive",
             "content": {
               "application/json": {
                 "schema": {
@@ -463,17 +554,100 @@
         }
       }
     },
-    "/v1/stats": {
+    "/v1/section-graph": {
       "get": {
-        "operationId": "getStats",
-        "summary": "Directory-wide counts",
+        "operationId": "exploreSections",
+        "summary": "Aggregate section connections and a bounded page of matching publishers",
+        "description": "Root graphs contain no individual publishers. Select sections to reveal publishers. Edges count shared sites within the selection; positions are approximate. Usage is measured without automatic discovery quotas.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "sections",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 605
+            },
+            "description": "Up to five comma-separated publisher section keys from GET /v1/sections. Independent of business categories."
+          },
+          {
+            "name": "section_match",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "include_sites",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "False returns aggregate connections and counts without publisher records."
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Stats"
+                  "$ref": "#/components/schemas/SectionGraph"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -512,7 +686,8 @@
               "type": "integer",
               "minimum": 1,
               "default": 1
-            }
+            },
+            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
           },
           {
             "name": "per_page",
@@ -530,7 +705,8 @@
             "schema": {
               "type": "boolean",
               "default": false
-            }
+            },
+            "description": "Requires explicit unlisted permission on an approved discovery client key."
           },
           {
             "name": "verified",
@@ -585,7 +761,33 @@
                 "food-dining",
                 "automotive",
                 "government-public-services",
-                "science-research"
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
               ]
             },
             "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
@@ -600,6 +802,41 @@
               ]
             },
             "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          },
+          {
+            "name": "agentic",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "interface",
+                "transactional",
+                "documentation",
+                "informational"
+              ]
+            },
+            "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+          },
+          {
+            "name": "sections",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 605
+            },
+            "description": "Up to five comma-separated publisher section keys from GET /v1/sections. Independent of business categories."
+          },
+          {
+            "name": "section_match",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ],
+              "default": "all"
+            }
           }
         ],
         "responses": {
@@ -615,6 +852,36 @@
           },
           "400": {
             "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
             "content": {
               "application/json": {
                 "schema": {
@@ -648,7 +915,8 @@
               "type": "integer",
               "minimum": 1,
               "default": 1
-            }
+            },
+            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
           },
           {
             "name": "per_page",
@@ -666,7 +934,8 @@
             "schema": {
               "type": "boolean",
               "default": false
-            }
+            },
+            "description": "Requires explicit unlisted permission on an approved discovery client key."
           },
           {
             "name": "verified",
@@ -721,7 +990,33 @@
                 "food-dining",
                 "automotive",
                 "government-public-services",
-                "science-research"
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
               ]
             },
             "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
@@ -736,6 +1031,41 @@
               ]
             },
             "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          },
+          {
+            "name": "agentic",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "interface",
+                "transactional",
+                "documentation",
+                "informational"
+              ]
+            },
+            "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+          },
+          {
+            "name": "sections",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 605
+            },
+            "description": "Up to five comma-separated publisher section keys from GET /v1/sections. Independent of business categories."
+          },
+          {
+            "name": "section_match",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ],
+              "default": "all"
+            }
           }
         ],
         "responses": {
@@ -751,6 +1081,36 @@
           },
           "400": {
             "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
             "content": {
               "application/json": {
                 "schema": {
@@ -813,8 +1173,99 @@
               }
             }
           },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/domain/{domain}/llms.txt": {
+      "get": {
+        "operationId": "readLlmsTxt",
+        "summary": "Our validated copy of the site llms.txt as text/plain, with X-Source-URL, X-Checked-At and X-Content-Hash headers; fetched once on demand when not cached",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The llms.txt text",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Publisher check failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1207,7 +1658,7 @@
     "/v1/sites/{domain}": {
       "patch": {
         "operationId": "updateSite",
-        "summary": "Owner: edit profile, terms and notification channels",
+        "summary": "Owner: control listing profile and terms for agents",
         "security": [
           {
             "apiKey": []
@@ -1283,7 +1734,7 @@
     "/v1/sites/{domain}/stats": {
       "get": {
         "operationId": "siteStats",
-        "summary": "Owner: lookup analytics, score history, notifications and badge",
+        "summary": "Owner: measured activity, file health, score history and badge",
         "security": [
           {
             "apiKey": []
@@ -1365,82 +1816,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Domain"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Bad or missing credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limited",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/sites/{domain}/notify/test": {
-      "post": {
-        "operationId": "testNotification",
-        "summary": "Owner: send a test event to the configured webhook/email",
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "domain",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 253
-            },
-            "description": "Domain name, e.g. example.com"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid arguments",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -1688,10 +2063,11 @@
         "scheme": "bearer",
         "description": "Owner API key from /verify"
       },
-      "watchSecret": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "Secret issued by POST /v1/watch"
+      "discoveryClient": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-AgentWebMap-Key",
+        "description": "Optional operator-issued integration identity, awm_client_…. Public discovery needs no key and has no automatic usage quotas. Owner keys are separate."
       }
     },
     "schemas": {
@@ -1899,12 +2275,130 @@
                 "food-dining",
                 "automotive",
                 "government-public-services",
-                "science-research"
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
               ]
             },
-            "maxItems": 5,
+            "maxItems": 8,
             "uniqueItems": true,
             "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+          },
+          "inferred_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Topic tags inferred by the AI classifier from the site text."
+          },
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "developers",
+                  "consumers",
+                  "business",
+                  "mixed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "agent_uses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "call_api",
+                "buy",
+                "book",
+                "search_content",
+                "download_data",
+                "contact_support"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform_generated": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "agent_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_txt_cached": {
+            "type": "string"
+          },
+          "agentic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "interface",
+                  "transactional",
+                  "documentation",
+                  "informational"
+                ],
+                "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "section_keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "section_partial": {
+            "type": "boolean"
+          },
+          "section_indexed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "capabilities": {
             "type": "array",
@@ -1916,6 +2410,55 @@
             },
             "uniqueItems": true,
             "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+          },
+          "section_headings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "level": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "format": {
+                  "enum": [
+                    "markdown",
+                    "loose",
+                    "setext",
+                    "indexed_link"
+                  ]
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "level",
+                "path",
+                "line",
+                "format"
+              ],
+              "additionalProperties": false
+            }
           },
           "verified_at": {
             "type": [
@@ -1989,6 +2532,9 @@
           "claim": {
             "type": "object",
             "properties": {
+              "agent_prompt": {
+                "type": "string"
+              },
               "hint": {
                 "type": "string"
               },
@@ -2012,6 +2558,7 @@
               }
             },
             "required": [
+              "agent_prompt",
               "hint",
               "verification",
               "verify",
@@ -2096,7 +2643,33 @@
                     "food-dining",
                     "automotive",
                     "government-public-services",
-                    "science-research"
+                    "science-research",
+                    "ai-agents-mcp",
+                    "apis-sdks",
+                    "databases",
+                    "auth-identity",
+                    "devops-observability",
+                    "no-code-automation",
+                    "communications",
+                    "crypto-web3",
+                    "saas-business-software",
+                    "open-source",
+                    "documentation-reference",
+                    "fashion-beauty",
+                    "home-garden",
+                    "consumer-electronics",
+                    "pets",
+                    "insurance",
+                    "telecom",
+                    "logistics-shipping",
+                    "energy-utilities",
+                    "construction-architecture",
+                    "agriculture",
+                    "nonprofit",
+                    "events",
+                    "personal-blog",
+                    "entertainment",
+                    "local-business"
                   ]
                 },
                 "confidence": {
@@ -2112,7 +2685,10 @@
                   }
                 },
                 "source": {
-                  "const": "publisher_metadata"
+                  "enum": [
+                    "publisher_metadata",
+                    "llm"
+                  ]
                 }
               },
               "required": [
@@ -2335,12 +2911,130 @@
                 "food-dining",
                 "automotive",
                 "government-public-services",
-                "science-research"
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
               ]
             },
-            "maxItems": 5,
+            "maxItems": 8,
             "uniqueItems": true,
             "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+          },
+          "inferred_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Topic tags inferred by the AI classifier from the site text."
+          },
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "developers",
+                  "consumers",
+                  "business",
+                  "mixed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "agent_uses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "call_api",
+                "buy",
+                "book",
+                "search_content",
+                "download_data",
+                "contact_support"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform_generated": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "agent_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_txt_cached": {
+            "type": "string"
+          },
+          "agentic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "interface",
+                  "transactional",
+                  "documentation",
+                  "informational"
+                ],
+                "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "section_keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "section_partial": {
+            "type": "boolean"
+          },
+          "section_indexed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "capabilities": {
             "type": "array",
@@ -2542,12 +3236,130 @@
                       "food-dining",
                       "automotive",
                       "government-public-services",
-                      "science-research"
+                      "science-research",
+                      "ai-agents-mcp",
+                      "apis-sdks",
+                      "databases",
+                      "auth-identity",
+                      "devops-observability",
+                      "no-code-automation",
+                      "communications",
+                      "crypto-web3",
+                      "saas-business-software",
+                      "open-source",
+                      "documentation-reference",
+                      "fashion-beauty",
+                      "home-garden",
+                      "consumer-electronics",
+                      "pets",
+                      "insurance",
+                      "telecom",
+                      "logistics-shipping",
+                      "energy-utilities",
+                      "construction-architecture",
+                      "agriculture",
+                      "nonprofit",
+                      "events",
+                      "personal-blog",
+                      "entertainment",
+                      "local-business"
                     ]
                   },
-                  "maxItems": 5,
+                  "maxItems": 8,
                   "uniqueItems": true,
                   "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+                },
+                "inferred_tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Topic tags inferred by the AI classifier from the site text."
+                },
+                "audience": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "developers",
+                        "consumers",
+                        "business",
+                        "mixed"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "agent_uses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "read_docs",
+                      "call_api",
+                      "buy",
+                      "book",
+                      "search_content",
+                      "download_data",
+                      "contact_support"
+                    ]
+                  },
+                  "uniqueItems": true
+                },
+                "language": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "platform_generated": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "agent_summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_txt_cached": {
+                  "type": "string"
+                },
+                "agentic": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "interface",
+                        "transactional",
+                        "documentation",
+                        "informational"
+                      ],
+                      "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "section_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "section_partial": {
+                  "type": "boolean"
+                },
+                "section_indexed_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "capabilities": {
                   "type": "array",
@@ -2559,6 +3371,55 @@
                   },
                   "uniqueItems": true,
                   "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+                },
+                "section_headings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "level": {
+                        "type": "integer"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "line": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "format": {
+                        "enum": [
+                          "markdown",
+                          "loose",
+                          "setext",
+                          "indexed_link"
+                        ]
+                      },
+                      "source_url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "level",
+                      "path",
+                      "line",
+                      "format"
+                    ],
+                    "additionalProperties": false
+                  }
                 },
                 "verified_at": {
                   "type": [
@@ -2632,6 +3493,9 @@
                 "claim": {
                   "type": "object",
                   "properties": {
+                    "agent_prompt": {
+                      "type": "string"
+                    },
                     "hint": {
                       "type": "string"
                     },
@@ -2655,6 +3519,7 @@
                     }
                   },
                   "required": [
+                    "agent_prompt",
                     "hint",
                     "verification",
                     "verify",
@@ -2739,7 +3604,33 @@
                           "food-dining",
                           "automotive",
                           "government-public-services",
-                          "science-research"
+                          "science-research",
+                          "ai-agents-mcp",
+                          "apis-sdks",
+                          "databases",
+                          "auth-identity",
+                          "devops-observability",
+                          "no-code-automation",
+                          "communications",
+                          "crypto-web3",
+                          "saas-business-software",
+                          "open-source",
+                          "documentation-reference",
+                          "fashion-beauty",
+                          "home-garden",
+                          "consumer-electronics",
+                          "pets",
+                          "insurance",
+                          "telecom",
+                          "logistics-shipping",
+                          "energy-utilities",
+                          "construction-architecture",
+                          "agriculture",
+                          "nonprofit",
+                          "events",
+                          "personal-blog",
+                          "entertainment",
+                          "local-business"
                         ]
                       },
                       "confidence": {
@@ -2755,7 +3646,10 @@
                         }
                       },
                       "source": {
-                        "const": "publisher_metadata"
+                        "enum": [
+                          "publisher_metadata",
+                          "llm"
+                        ]
                       }
                     },
                     "required": [
@@ -3001,12 +3895,130 @@
                     "food-dining",
                     "automotive",
                     "government-public-services",
-                    "science-research"
+                    "science-research",
+                    "ai-agents-mcp",
+                    "apis-sdks",
+                    "databases",
+                    "auth-identity",
+                    "devops-observability",
+                    "no-code-automation",
+                    "communications",
+                    "crypto-web3",
+                    "saas-business-software",
+                    "open-source",
+                    "documentation-reference",
+                    "fashion-beauty",
+                    "home-garden",
+                    "consumer-electronics",
+                    "pets",
+                    "insurance",
+                    "telecom",
+                    "logistics-shipping",
+                    "energy-utilities",
+                    "construction-architecture",
+                    "agriculture",
+                    "nonprofit",
+                    "events",
+                    "personal-blog",
+                    "entertainment",
+                    "local-business"
                   ]
                 },
-                "maxItems": 5,
+                "maxItems": 8,
                 "uniqueItems": true,
                 "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+              },
+              "inferred_tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Topic tags inferred by the AI classifier from the site text."
+              },
+              "audience": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "developers",
+                      "consumers",
+                      "business",
+                      "mixed"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "agent_uses": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "read_docs",
+                    "call_api",
+                    "buy",
+                    "book",
+                    "search_content",
+                    "download_data",
+                    "contact_support"
+                  ]
+                },
+                "uniqueItems": true
+              },
+              "language": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "platform_generated": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "agent_summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "llms_txt_cached": {
+                "type": "string"
+              },
+              "agentic": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "interface",
+                      "transactional",
+                      "documentation",
+                      "informational"
+                    ],
+                    "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "section_keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "section_partial": {
+                "type": "boolean"
+              },
+              "section_indexed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "capabilities": {
                 "type": "array",
@@ -3018,6 +4030,55 @@
                 },
                 "uniqueItems": true,
                 "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+              },
+              "section_headings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": "integer"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "format": {
+                      "enum": [
+                        "markdown",
+                        "loose",
+                        "setext",
+                        "indexed_link"
+                      ]
+                    },
+                    "source_url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "level",
+                    "path",
+                    "line",
+                    "format"
+                  ],
+                  "additionalProperties": false
+                }
               },
               "verified_at": {
                 "type": [
@@ -3091,6 +4152,9 @@
               "claim": {
                 "type": "object",
                 "properties": {
+                  "agent_prompt": {
+                    "type": "string"
+                  },
                   "hint": {
                     "type": "string"
                   },
@@ -3114,6 +4178,7 @@
                   }
                 },
                 "required": [
+                  "agent_prompt",
                   "hint",
                   "verification",
                   "verify",
@@ -3198,7 +4263,33 @@
                         "food-dining",
                         "automotive",
                         "government-public-services",
-                        "science-research"
+                        "science-research",
+                        "ai-agents-mcp",
+                        "apis-sdks",
+                        "databases",
+                        "auth-identity",
+                        "devops-observability",
+                        "no-code-automation",
+                        "communications",
+                        "crypto-web3",
+                        "saas-business-software",
+                        "open-source",
+                        "documentation-reference",
+                        "fashion-beauty",
+                        "home-garden",
+                        "consumer-electronics",
+                        "pets",
+                        "insurance",
+                        "telecom",
+                        "logistics-shipping",
+                        "energy-utilities",
+                        "construction-architecture",
+                        "agriculture",
+                        "nonprofit",
+                        "events",
+                        "personal-blog",
+                        "entertainment",
+                        "local-business"
                       ]
                     },
                     "confidence": {
@@ -3214,7 +4305,10 @@
                       }
                     },
                     "source": {
-                      "const": "publisher_metadata"
+                      "enum": [
+                        "publisher_metadata",
+                        "llm"
+                      ]
                     }
                   },
                   "required": [
@@ -3633,9 +4727,6 @@
               ],
               "additionalProperties": false
             }
-          },
-          "watch": {
-            "type": "string"
           }
         },
         "required": [
@@ -3648,8 +4739,7 @@
           "sources",
           "match",
           "provenance",
-          "alternatives",
-          "watch"
+          "alternatives"
         ],
         "additionalProperties": false
       },
@@ -3958,118 +5048,6 @@
         ],
         "additionalProperties": false
       },
-      "Watch": {
-        "type": "object",
-        "properties": {
-          "watch_id": {
-            "type": "integer"
-          },
-          "domain": {
-            "type": "string"
-          },
-          "webhook_url": {
-            "type": "string"
-          },
-          "secret": {
-            "type": "string"
-          },
-          "events": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "delivery": {
-            "type": "string"
-          },
-          "test": {
-            "type": "string"
-          },
-          "unsubscribe": {
-            "type": "string"
-          },
-          "note": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "watch_id",
-          "domain",
-          "webhook_url",
-          "secret",
-          "events",
-          "delivery",
-          "test",
-          "unsubscribe",
-          "note"
-        ],
-        "additionalProperties": false
-      },
-      "Unwatch": {
-        "type": "object",
-        "properties": {
-          "watch_id": {
-            "type": "integer"
-          },
-          "domain": {
-            "type": "string"
-          },
-          "active": {
-            "const": false
-          }
-        },
-        "required": [
-          "watch_id",
-          "domain",
-          "active"
-        ],
-        "additionalProperties": false
-      },
-      "NotificationResult": {
-        "type": "object",
-        "properties": {
-          "domain": {
-            "type": "string"
-          },
-          "watch_id": {
-            "type": "integer"
-          },
-          "attempts": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "event": {
-                  "type": "string"
-                },
-                "channel": {
-                  "type": "string"
-                },
-                "watch_id": {
-                  "type": "integer"
-                },
-                "ok": {
-                  "type": "boolean"
-                },
-                "detail": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "event",
-                "ok",
-                "detail"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "domain",
-          "attempts"
-        ],
-        "additionalProperties": false
-      },
       "Stats": {
         "type": "object",
         "properties": {
@@ -4307,9 +5285,6 @@
               "markdown"
             ],
             "additionalProperties": false
-          },
-          "notifications": {
-            "type": "string"
           }
         },
         "required": [
@@ -4319,8 +5294,7 @@
           "api_key",
           "note",
           "manage",
-          "badge",
-          "notifications"
+          "badge"
         ],
         "additionalProperties": false
       },
@@ -4512,18 +5486,6 @@
                 "type": "null"
               }
             ]
-          },
-          "webhook_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "notify_email": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "required": [],
@@ -4683,12 +5645,130 @@
                 "food-dining",
                 "automotive",
                 "government-public-services",
-                "science-research"
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
               ]
             },
-            "maxItems": 5,
+            "maxItems": 8,
             "uniqueItems": true,
             "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+          },
+          "inferred_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Topic tags inferred by the AI classifier from the site text."
+          },
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "developers",
+                  "consumers",
+                  "business",
+                  "mixed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "agent_uses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "call_api",
+                "buy",
+                "book",
+                "search_content",
+                "download_data",
+                "contact_support"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform_generated": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "agent_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "llms_txt_cached": {
+            "type": "string"
+          },
+          "agentic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "interface",
+                  "transactional",
+                  "documentation",
+                  "informational"
+                ],
+                "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "section_keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "section_partial": {
+            "type": "boolean"
+          },
+          "section_indexed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "capabilities": {
             "type": "array",
@@ -4700,6 +5780,55 @@
             },
             "uniqueItems": true,
             "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+          },
+          "section_headings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "level": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "format": {
+                  "enum": [
+                    "markdown",
+                    "loose",
+                    "setext",
+                    "indexed_link"
+                  ]
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "level",
+                "path",
+                "line",
+                "format"
+              ],
+              "additionalProperties": false
+            }
           },
           "verified_at": {
             "type": [
@@ -4773,6 +5902,9 @@
           "claim": {
             "type": "object",
             "properties": {
+              "agent_prompt": {
+                "type": "string"
+              },
               "hint": {
                 "type": "string"
               },
@@ -4796,6 +5928,7 @@
               }
             },
             "required": [
+              "agent_prompt",
               "hint",
               "verification",
               "verify",
@@ -4880,7 +6013,33 @@
                     "food-dining",
                     "automotive",
                     "government-public-services",
-                    "science-research"
+                    "science-research",
+                    "ai-agents-mcp",
+                    "apis-sdks",
+                    "databases",
+                    "auth-identity",
+                    "devops-observability",
+                    "no-code-automation",
+                    "communications",
+                    "crypto-web3",
+                    "saas-business-software",
+                    "open-source",
+                    "documentation-reference",
+                    "fashion-beauty",
+                    "home-garden",
+                    "consumer-electronics",
+                    "pets",
+                    "insurance",
+                    "telecom",
+                    "logistics-shipping",
+                    "energy-utilities",
+                    "construction-architecture",
+                    "agriculture",
+                    "nonprofit",
+                    "events",
+                    "personal-blog",
+                    "entertainment",
+                    "local-business"
                   ]
                 },
                 "confidence": {
@@ -4896,7 +6055,10 @@
                   }
                 },
                 "source": {
-                  "const": "publisher_metadata"
+                  "enum": [
+                    "publisher_metadata",
+                    "llm"
+                  ]
                 }
               },
               "required": [
@@ -4946,34 +6108,6 @@
               ],
               "additionalProperties": false
             }
-          },
-          "notifications": {
-            "type": "object",
-            "properties": {
-              "webhook_url": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "notify_email": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "webhook_url",
-              "notify_email"
-            ],
-            "additionalProperties": false
-          },
-          "webhook_secret": {
-            "type": "string"
-          },
-          "webhook_note": {
-            "type": "string"
           }
         },
         "required": [
@@ -4989,8 +6123,7 @@
           "last_checked",
           "agent_terms",
           "categories",
-          "capabilities",
-          "notifications"
+          "capabilities"
         ],
         "additionalProperties": false
       },
@@ -5116,69 +6249,6 @@
               "svg",
               "html",
               "markdown"
-            ],
-            "additionalProperties": false
-          },
-          "notifications": {
-            "type": "object",
-            "properties": {
-              "webhook_url": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "notify_email": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "recent": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "event": {
-                      "type": "string"
-                    },
-                    "channel": {
-                      "type": "string"
-                    },
-                    "watch_id": {
-                      "type": "integer"
-                    },
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "detail": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "sent_at": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "event",
-                    "channel",
-                    "ok",
-                    "detail",
-                    "sent_at"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            "required": [
-              "webhook_url",
-              "notify_email",
-              "recent"
             ],
             "additionalProperties": false
           },
@@ -5376,7 +6446,6 @@
           "checks",
           "last_checked",
           "badge",
-          "notifications",
           "history"
         ],
         "additionalProperties": false
@@ -5636,7 +6705,33 @@
                     "food-dining",
                     "automotive",
                     "government-public-services",
-                    "science-research"
+                    "science-research",
+                    "ai-agents-mcp",
+                    "apis-sdks",
+                    "databases",
+                    "auth-identity",
+                    "devops-observability",
+                    "no-code-automation",
+                    "communications",
+                    "crypto-web3",
+                    "saas-business-software",
+                    "open-source",
+                    "documentation-reference",
+                    "fashion-beauty",
+                    "home-garden",
+                    "consumer-electronics",
+                    "pets",
+                    "insurance",
+                    "telecom",
+                    "logistics-shipping",
+                    "energy-utilities",
+                    "construction-architecture",
+                    "agriculture",
+                    "nonprofit",
+                    "events",
+                    "personal-blog",
+                    "entertainment",
+                    "local-business"
                   ]
                 },
                 "label": {
@@ -5658,6 +6753,34 @@
               ],
               "additionalProperties": false
             }
+          },
+          "agentic": {
+            "type": "object",
+            "properties": {
+              "interface": {
+                "type": "integer"
+              },
+              "transactional": {
+                "type": "integer"
+              },
+              "documentation": {
+                "type": "integer"
+              },
+              "informational": {
+                "type": "integer"
+              },
+              "unlabelled": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "interface",
+              "transactional",
+              "documentation",
+              "informational",
+              "unlabelled"
+            ],
+            "additionalProperties": false
           },
           "capabilities": {
             "type": "array",
@@ -5691,6 +6814,7 @@
         "required": [
           "taxonomy_version",
           "categories",
+          "agentic",
           "capabilities",
           "uncategorized"
         ],
@@ -5724,8 +6848,357 @@
           "food-dining",
           "automotive",
           "government-public-services",
-          "science-research"
+          "science-research",
+          "ai-agents-mcp",
+          "apis-sdks",
+          "databases",
+          "auth-identity",
+          "devops-observability",
+          "no-code-automation",
+          "communications",
+          "crypto-web3",
+          "saas-business-software",
+          "open-source",
+          "documentation-reference",
+          "fashion-beauty",
+          "home-garden",
+          "consumer-electronics",
+          "pets",
+          "insurance",
+          "telecom",
+          "logistics-shipping",
+          "energy-utilities",
+          "construction-architecture",
+          "agriculture",
+          "nonprofit",
+          "events",
+          "personal-blog",
+          "entertainment",
+          "local-business"
         ]
+      },
+      "SectionCatalogue": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "sites": {
+                  "type": "integer"
+                },
+                "total_sites": {
+                  "type": "integer"
+                },
+                "first_seen": {
+                  "type": "string"
+                },
+                "emerged_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "change_7d": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "sites",
+                "total_sites",
+                "first_seen",
+                "emerged_at",
+                "change_7d"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sectionMatch": {
+                "enum": [
+                  "all",
+                  "any"
+                ]
+              }
+            },
+            "required": [
+              "sections",
+              "sectionMatch"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "eligible_sites": {
+                "type": "integer"
+              },
+              "indexed_sites": {
+                "type": "integer"
+              },
+              "partial_sites": {
+                "type": "integer"
+              },
+              "pending_files": {
+                "type": "integer"
+              },
+              "baseline_ready": {
+                "type": "boolean"
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "eligible_sites",
+              "indexed_sites",
+              "partial_sites",
+              "pending_files",
+              "baseline_ready",
+              "updated_at"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "per_page",
+          "results",
+          "filters",
+          "coverage"
+        ],
+        "additionalProperties": false
+      },
+      "SectionGraph": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "sites": {
+                  "type": "integer"
+                },
+                "total_sites": {
+                  "type": "integer"
+                },
+                "selected": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "sites",
+                "total_sites",
+                "selected"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string"
+                },
+                "sites": {
+                  "type": "integer"
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "source",
+                "target",
+                "sites",
+                "strength"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "authority": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                },
+                "section_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "section_partial": {
+                  "type": "boolean"
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "domain",
+                "title",
+                "authority",
+                "verified",
+                "section_keys",
+                "section_partial",
+                "source_url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sites_included": {
+            "type": "boolean"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sectionMatch": {
+                "enum": [
+                  "all",
+                  "any"
+                ]
+              }
+            },
+            "required": [
+              "sections",
+              "sectionMatch"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "eligible_sites": {
+                "type": "integer"
+              },
+              "indexed_sites": {
+                "type": "integer"
+              },
+              "partial_sites": {
+                "type": "integer"
+              },
+              "pending_files": {
+                "type": "integer"
+              },
+              "baseline_ready": {
+                "type": "boolean"
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "eligible_sites",
+              "indexed_sites",
+              "partial_sites",
+              "pending_files",
+              "baseline_ready",
+              "updated_at"
+            ],
+            "additionalProperties": false
+          },
+          "meaning": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges",
+          "sites",
+          "sites_included",
+          "total",
+          "page",
+          "per_page",
+          "filters",
+          "coverage",
+          "meaning"
+        ],
+        "additionalProperties": false
       },
       "ClaimChallenge": {
         "type": "object",

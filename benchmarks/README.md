@@ -37,7 +37,7 @@ All attempts, errors, returned URLs and per-task matches are retained in the rep
 
 The expected URLs are evaluation rules, not claims that those pages are indexed. Review rules against current official documentation before publishing benchmark conclusions. URL matches are a proxy for useful discovery; manually inspect returned pages, excerpts and whether they answer the actual question. A URL hit does not establish factual accuracy or implementation success. Extend the dataset with held-out tasks rather than tuning solely to these examples.
 
-Published measurements and their limits are available in the [run report](../docs/benchmark-results.md) and on the [live benchmark page](https://agentwebmap.com/benchmarks). A full agent evaluation should compare time to a correct implementation, source fetches, model tokens, retries and task completion against official-site search or ordinary web search. This runner measures only the discovery step.
+Historical measurements and their limits are available in the [run report](../docs/benchmark-results.md). They describe the dated runs rather than the current service. Current index figures are on the [statistics page](https://agentwebmap.com/stats). A full agent evaluation should compare time to a correct implementation, source fetches, model tokens, retries and task completion against official-site search or ordinary web search. This runner measures only the discovery step.
 
 Run the runner's local checks without an external service:
 

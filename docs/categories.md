@@ -6,36 +6,62 @@ Use categories to narrow documentation discovery by the publisher's subject or b
 
 `GET https://agentwebmap.com/v1/categories` or MCP `list_categories` returns `taxonomy_version`, `categories`, `uncategorized`, and `capabilities`.
 
-Each category has `id`, `label`, `description` and `count`. Version `"2"` retains all 16 original IDs and adds ten publisher industries:
+Each category has an id, label, description and count. The current taxonomy has 52 categories; rule version 2. Read the endpoint for current IDs.
 
 | ID | Label |
 |---|---|
+| `agriculture` | Agriculture |
+| `ai-agents-mcp` | AI agents and MCP |
 | `ai-ml` | AI and machine learning |
-| `developer-tools` | Developer tools |
-| `infrastructure` | Infrastructure |
-| `data-analytics` | Data and analytics |
-| `cybersecurity` | Cybersecurity |
-| `finance-payments` | Finance and payments |
-| `ecommerce` | Ecommerce |
-| `productivity` | Productivity |
-| `marketing` | Marketing |
-| `education` | Education |
-| `healthcare` | Healthcare |
-| `media` | Media |
-| `design` | Design |
-| `gaming` | Gaming |
-| `travel` | Travel |
-| `community` | Community |
-| `legal` | Legal |
-| `recruiting-careers` | Recruiting and careers |
-| `industrial-manufacturing` | Industry and manufacturing |
-| `real-estate` | Real estate |
+| `apis-sdks` | APIs and SDKs |
 | `arts-culture` | Arts and culture |
-| `sports-fitness` | Sports and fitness |
-| `food-dining` | Food and dining |
+| `auth-identity` | Authentication and identity |
 | `automotive` | Automotive |
+| `saas-business-software` | Business software |
+| `communications` | Communications |
+| `community` | Community |
+| `construction-architecture` | Construction and architecture |
+| `consumer-electronics` | Consumer electronics |
+| `crypto-web3` | Crypto and Web3 |
+| `cybersecurity` | Cybersecurity |
+| `data-analytics` | Data and analytics |
+| `databases` | Databases |
+| `design` | Design |
+| `developer-tools` | Developer tools |
+| `devops-observability` | DevOps and observability |
+| `documentation-reference` | Documentation and reference |
+| `ecommerce` | Ecommerce |
+| `education` | Education |
+| `energy-utilities` | Energy and utilities |
+| `entertainment` | Entertainment and streaming |
+| `events` | Events and conferences |
+| `fashion-beauty` | Fashion and beauty |
+| `finance-payments` | Finance and payments |
+| `food-dining` | Food and dining |
+| `gaming` | Gaming |
 | `government-public-services` | Government and public services |
+| `healthcare` | Healthcare |
+| `home-garden` | Home and garden |
+| `industrial-manufacturing` | Industry and manufacturing |
+| `infrastructure` | Infrastructure |
+| `insurance` | Insurance |
+| `legal` | Legal |
+| `local-business` | Local business |
+| `logistics-shipping` | Logistics and shipping |
+| `marketing` | Marketing |
+| `media` | Media |
+| `no-code-automation` | No-code and automation |
+| `nonprofit` | Nonprofit and advocacy |
+| `open-source` | Open source projects |
+| `personal-blog` | Personal sites and blogs |
+| `pets` | Pets |
+| `productivity` | Productivity |
+| `real-estate` | Real estate |
+| `recruiting-careers` | Recruiting and careers |
 | `science-research` | Science and research |
+| `sports-fitness` | Sports and fitness |
+| `telecom` | Telecom |
+| `travel` | Travel |
 
 Counts cover unblocked `listed` and `featured` domains, matching the default browsable directory. Sites can have up to five categories, so counts overlap. Empty `categories: []` means the rules found insufficient evidence; it does not mean a site is low quality or unsafe. A newly indexed or not-yet-backfilled site can also lack classification. `uncategorized` includes both empty cases. Discover current IDs and descriptions from the endpoint rather than inventing a filter value.
 
@@ -91,3 +117,9 @@ Detection requires a publisher-provided link explicitly labeled as an MCP server
 ## Stored classification and backfill
 
 New crawls compute classification from publisher metadata, including an opening prose description when a publisher does not use a blockquote summary. The crawler automatically processes stored rows whose classification version is stale in bounded batches; changing the rules version schedules reassessment from stored metadata without fetching each site again. Newly indexed documentation also triggers classification using its richer evidence. Reclassification updates category and declared capability metadata from stored evidence. It does not validate a declared MCP endpoint. Versioned rules make later classification changes reviewable. The separate documentation backfill has request, worker and time budgets, and failed attempts back off instead of blocking other publishers. Directory coverage and counts change as crawling and backfills progress; an uncategorized result remains valid when evidence is insufficient.
+
+## Agentic labels
+
+Listings also carry an inferred `agentic` field: `interface` for an API or declared MCP endpoint, `transactional` for buying/booking, `documentation` for docs to read, or `informational` for general content. Unlabelled sites return null. Filter search, list and resolve with `agentic=<value>`; this combines with category and capability filters. These hints do not certify an endpoint or authorize transactions.
+
+Public categories combine deterministic rules with model-inferred categories where available. Each site counts at most once within a category, even when both sources agree. Category totals overlap across different categories. Full responses retain the underlying evidence.
