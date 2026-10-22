@@ -193,9 +193,10 @@ Tools publish input/output schemas and behavior annotations. Annotations describ
 
 Verify your domain to control its listing and see activity through Agent Web Map. The [private owner dashboard](https://agentwebmap.com/manage) brings together listing controls, file health, on-demand rechecks, daily discovery activity and score history. Return to the dashboard to review the latest results. API and MCP clients can use the same owner operations.
 
-Listings and public discovery are usable without verification. Ownership confirmation proves domain control.
+Listings and public discovery are usable without verification. Search-engine indexing of individual publisher profiles requires ownership verification and a valid, listed, unblocked profile. Unverified profiles stay available on the website, REST and MCP, with search indexing disabled. Verification makes a profile eligible; it does not guarantee indexing or ranking. Ownership confirmation proves domain control, not content accuracy or endorsement.
 
 - A private owner dashboard to control your listing and review activity through Agent Web Map
+- Eligibility for search-engine visibility while your profile is valid, listed and unblocked; search engines decide what to index
 - Edit your description, tags, nested llms.txt files and public contact information
 - Publish your terms for agents: automated access, rate limits, attribution and pricing
 - Review file health and request a fresh check on demand

@@ -115,7 +115,9 @@ Owner tools require the domain's owner credentials. Public discovery does not re
 
 ## Why verify your website?
 
-[Verify your domain](https://agentwebmap.com/manage) to control its description and tags, publish terms for agents, recheck file health, and return to a private dashboard with daily discovery activity and score history. Verified listings receive an ownership signal and an embeddable badge; eligible verified publishers are included in [our llms-full.txt](https://agentwebmap.com/llms-full.txt).
+[Verify your domain](https://agentwebmap.com/manage) to control its description and tags, publish terms for agents, recheck file health, and return to a private dashboard with daily discovery activity and score history. Valid, listed, unblocked, verified profiles become eligible for search-engine visibility. Verified listings receive an ownership signal and an embeddable badge; eligible verified publishers are included in [our llms-full.txt](https://agentwebmap.com/llms-full.txt).
+
+Unverified publisher profiles stay available on the website and through REST/MCP, with search indexing disabled. Search engines decide which eligible verified profiles to index; verification does not guarantee ranking or establish endorsement.
 
 The browser guides you through proof in llms.txt, DNS, a homepage meta tag or a well-known file. API and MCP clients start a fresh claim, publish its proof and complete the check using private claim credentials. No backlink is required. Verification confirms domain control, rather than accuracy or endpoint availability.
 

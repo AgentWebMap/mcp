@@ -2,6 +2,8 @@
 
 Sites can be discovered, crawled and listed without an account, ownership confirmation or a backlink. Public REST/MCP discovery remains free of owner credentials. Ownership confirmation lets a publisher edit its profile, publish terms for agents, recheck file health and inspect measured activity and score history. It confirms control of a domain, without endorsing the site's content.
 
+Search-engine visibility for an individual publisher profile requires ownership verification and a valid, listed, unblocked listing. Unverified profiles remain usable on the website and through REST/MCP, with search indexing disabled. Eligible verified profiles appear in the sitemap; indexing and ranking are decided by the search engine. Verification does not override quality or visibility rules.
+
 ## Use the browser
 
 1. Open [Manage your listing](https://agentwebmap.com/manage), enter your domain and choose **Start ownership check**. You can also visit `https://agentwebmap.com/manage/example.com` directly.
