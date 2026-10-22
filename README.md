@@ -1,4 +1,4 @@
-<p><a href="https://agentwebmap.com/"><strong>agentwebmap.txt</strong> — Agent Web Map</a></p>
+<p><a href="https://agentwebmap.com/"><strong>agentwebmap.com</strong> — Agent Web Map</a></p>
 
 <p align="center"><a href="https://agentwebmap.com/browse">Browse and search</a> · <a href="https://agentwebmap.com/explore">Explore sections</a> · <a href="https://agentwebmap.com/stats">Statistics</a> · <a href="https://agentwebmap.com/docs">API &amp; MCP</a> · <a href="https://agentwebmap.com/manage">Manage your listing</a></p>
 
