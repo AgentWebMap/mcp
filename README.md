@@ -34,7 +34,9 @@ The service combines task-focused source discovery, explicit freshness and prove
 | Submit a publisher's file for checking | [Submit a site](https://agentwebmap.com/submit) |
 | Verify ownership and manage a listing | [Owner dashboard](https://agentwebmap.com/manage) |
 
-Search combines keyword and meaning-based matches when available, with keyword fallback. Task relevance comes before authority and ownership signals. Filters include categories, publisher-declared MCP capabilities, inferred agentic labels and sections extracted from indexed files.
+Search combines keyword and meaning-based matches when available, with keyword fallback. Task relevance comes before authority and ownership signals. Filters include categories, publisher-declared MCP capabilities, inferred agentic labels, country and sections extracted from indexed files.
+
+[Filter by country](https://agentwebmap.com/docs#countries) in Browse or the section cloud, or pass `country=FR` / `country=unknown` through REST and MCP. [`GET /v1/countries`](https://agentwebmap.com/v1/countries) and `list_countries` expose available codes and listed-site counts. Country reflects domain or hosting location; it does not establish company headquarters or markets served.
 
 The section catalogue grows as new files and headings are indexed. The point cloud connects labels shared by publishers; selecting labels reveals matching sites. These relationships come from heading co-occurrence, independently of meaning-based search and AI topic classification. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
 
@@ -90,6 +92,7 @@ curl --get https://agentwebmap.com/v1/resolve \
 | [`GET /v1/resolve?q=modelcontextprotocol%20authorization`](https://agentwebmap.com/v1/resolve?q=modelcontextprotocol%20authorization) | Find documentation URLs, evidence and freshness for a task |
 | [`GET /v1/search?q=cloudflare`](https://agentwebmap.com/v1/search?q=cloudflare) | Search publishers by words and meaning |
 | [`GET /v1/domains`](https://agentwebmap.com/v1/domains) | Browse ranked listings with filters and pagination |
+| [`GET /v1/countries`](https://agentwebmap.com/v1/countries) | Available inferred country codes, names and listed-site counts, including unknown locations |
 | [`GET /v1/domain/agentwebmap.com`](https://agentwebmap.com/v1/domain/agentwebmap.com) | Look up one publisher and its files |
 | [`GET /v1/domain/agentwebmap.com/llms.txt`](https://agentwebmap.com/v1/domain/agentwebmap.com/llms.txt) | Read a validated cached publisher file |
 | [`GET /v1/categories`](https://agentwebmap.com/v1/categories) | Discover category IDs, counts and declared capabilities |
@@ -101,7 +104,7 @@ curl --get https://agentwebmap.com/v1/resolve \
 
 ## MCP tools
 
-The hosted server exposes **19 tools**, checked on 22 October 2026. `tools/list` is the live inventory.
+The hosted server exposes **20 tools**, checked on 22 October 2026. `tools/list` is the live inventory.
 
 | Tool | Purpose |
 |---|---|
@@ -111,6 +114,7 @@ The hosted server exposes **19 tools**, checked on 22 October 2026. `tools/list`
 | `lookup_domain` | Read a publisher's listing and file URLs |
 | `read_llms_txt` | Read a cached file with source URL, check date and hash |
 | `list_categories` | Discover categories, agentic labels and declared capabilities |
+| `list_countries` | Discover inferred countries and counts; filter list, search, resolve and sections with `country` |
 | `list_sections` | Discover headings, counts, emerging labels and coverage |
 | `explore_sections` | Explore shared headings, connections and matching publishers |
 | `directory_stats` | Read directory-wide counts |

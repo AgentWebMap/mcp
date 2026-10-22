@@ -27,7 +27,9 @@ Edges count distinct eligible sites sharing both labels within the selection. Re
 
 ## Filter publisher search
 
-[Search](https://agentwebmap.com/docs#search), domain listing and Browse accept section filters alongside category and agentic filters. REST uses comma-separated keys; MCP `search_llms_registry` and `list_domains` accept arrays. Query the catalogue before choosing keys instead of inventing them.
+[Search](https://agentwebmap.com/docs#search), domain listing and Browse accept section filters alongside category, agentic and country filters. REST uses comma-separated keys; MCP `search_llms_registry` and `list_domains` accept arrays. Query the catalogue before choosing keys instead of inventing them.
+
+The explorer, catalogue and graph also accept `country=FR` or `country=unknown`. MCP `list_sections` and `explore_sections` use the same `country` argument. Discover available codes with [`GET /v1/countries`](https://agentwebmap.com/v1/countries) or `list_countries`. Label `sites` counts, graph edges and publisher results respect the selected country. `total_sites`, seven-day changes, emergence dates and coverage remain global context. Country is inferred from domains or hosting, not verified headquarters or markets served. [Country reference](https://agentwebmap.com/docs#countries).
 
 Compact publisher results include `section_keys`, `section_partial` and `section_indexed_at`. With `detail=full`, `section_headings` retains original labels, heading levels and hierarchy, source URLs, line evidence and parsing format. Line numbers may be absent for older link metadata.
 

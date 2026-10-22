@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.13.1",
+    "version": "0.14.0",
     "description": "Agent Web Map is the directory of websites publishing llms.txt: found across the web, validated continuously and ranked by authority, with a free JSON API and MCP server so AI agents can look any site up. Public discovery has no automatic daily or pagination quotas. Usage is monitored; only explicit operator source blocks deny discovery access. Optional integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
@@ -311,6 +311,16 @@
             "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
           },
           {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            },
+            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+          },
+          {
             "name": "max_age",
             "in": "query",
             "schema": {
@@ -476,7 +486,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
+            "description": "Page number. Public discovery has no automatic result-window quota."
           },
           {
             "name": "per_page",
@@ -487,6 +497,16 @@
               "maximum": 100,
               "default": 36
             }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            },
+            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
           },
           {
             "name": "sections",
@@ -568,7 +588,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
+            "description": "Page number. Public discovery has no automatic result-window quota."
           },
           {
             "name": "per_page",
@@ -579,6 +599,16 @@
               "maximum": 100,
               "default": 50
             }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            },
+            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
           },
           {
             "name": "sections",
@@ -687,7 +717,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
+            "description": "Page number. Public discovery has no automatic result-window quota."
           },
           {
             "name": "per_page",
@@ -816,6 +846,16 @@
               ]
             },
             "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            },
+            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
           },
           {
             "name": "sections",
@@ -893,6 +933,44 @@
         }
       }
     },
+    "/v1/countries": {
+      "get": {
+        "operationId": "listCountries",
+        "summary": "Available inferred countries and listed-site counts, including unknown locations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountryStats"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/search": {
       "get": {
         "operationId": "searchDomains",
@@ -916,7 +994,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "First 250 results per anonymous query; approved clients default to 1,000. page × per_page must fit the result window."
+            "description": "Page number. Public discovery has no automatic result-window quota."
           },
           {
             "name": "per_page",
@@ -1045,6 +1123,16 @@
               ]
             },
             "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            },
+            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
           },
           {
             "name": "sections",
@@ -2353,6 +2441,26 @@
               "null"
             ]
           },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+          },
+          "country_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "tld",
+              "ip",
+              "cdn",
+              null
+            ],
+            "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+          },
           "platform_generated": {
             "type": [
               "boolean",
@@ -2509,12 +2617,6 @@
             ]
           },
           "registered_at": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "country": {
             "type": [
               "string",
               "null"
@@ -2989,6 +3091,26 @@
               "null"
             ]
           },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+          },
+          "country_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "tld",
+              "ip",
+              "cdn",
+              null
+            ],
+            "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+          },
           "platform_generated": {
             "type": [
               "boolean",
@@ -3314,6 +3436,26 @@
                     "null"
                   ]
                 },
+                "country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+                },
+                "country_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "tld",
+                    "ip",
+                    "cdn",
+                    null
+                  ],
+                  "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+                },
                 "platform_generated": {
                   "type": [
                     "boolean",
@@ -3470,12 +3612,6 @@
                   ]
                 },
                 "registered_at": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "country": {
                   "type": [
                     "string",
                     "null"
@@ -3973,6 +4109,26 @@
                   "null"
                 ]
               },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+              },
+              "country_source": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "tld",
+                  "ip",
+                  "cdn",
+                  null
+                ],
+                "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+              },
               "platform_generated": {
                 "type": [
                   "boolean",
@@ -4129,12 +4285,6 @@
                 ]
               },
               "registered_at": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "country": {
                 "type": [
                   "string",
                   "null"
@@ -5723,6 +5873,26 @@
               "null"
             ]
           },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+          },
+          "country_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "tld",
+              "ip",
+              "cdn",
+              null
+            ],
+            "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+          },
           "platform_generated": {
             "type": [
               "boolean",
@@ -5879,12 +6049,6 @@
             ]
           },
           "registered_at": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "country": {
             "type": [
               "string",
               "null"
@@ -6877,6 +7041,55 @@
           "local-business"
         ]
       },
+      "CountryStats": {
+        "type": "object",
+        "properties": {
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "code",
+                "name",
+                "count"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "unknown": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "meaning": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "countries",
+          "unknown",
+          "total",
+          "meaning"
+        ],
+        "additionalProperties": false
+      },
+      "CountryFilter": {
+        "type": "string",
+        "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+        "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+      },
       "SectionCatalogue": {
         "type": "object",
         "properties": {
@@ -6944,6 +7157,12 @@
                 "enum": [
                   "all",
                   "any"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
                 ]
               }
             },
@@ -7138,6 +7357,12 @@
                 "enum": [
                   "all",
                   "any"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
                 ]
               }
             },

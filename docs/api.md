@@ -49,7 +49,7 @@ Read `best`, `sources`, `match.strength` and `health.stale`, then fetch the link
 | `limit` | 1–5 documentation targets; default 3 |
 | `max_age` | Acceptable check age in seconds; 0–2592000, default 86400 |
 | `refresh` | `true` performs a bounded live llms.txt check for this response |
-| `category`, `capability`, `agentic` | Optional filters, combined with AND |
+| `category`, `capability`, `agentic`, `country` | Optional filters, combined with AND |
 
 `health.stale` marks old checks without hiding them. A live refresh checks llms.txt, not every linked page, and does not update the stored index. Missing owner terms mean unknown. A topic with no match returns `404`, `error: "no_match"` and `best: null`; discovery does not require registering the missing site.
 
@@ -71,10 +71,35 @@ curl 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io'
 | `GET /v1/domains` | Ranked listings; also accepts `q` |
 | `GET /v1/domain/{domain}` | One domain’s file URLs, summary, categories, agentic label and check date |
 | `GET /v1/categories` | Taxonomy, overlapping counts, declared capabilities and agentic counts |
+| `GET /v1/countries` | Available country codes, names and listed-site counts, plus unknown and total counts |
 | `GET /v1/stats` | Directory counts |
 | `GET /v1/map` | Valid sites by inferred country |
 
 Search and list accept `page` (default 1), `per_page` (default 10, maximum 100), `verified=true`, `detail` and the filters below. There is no discovery result-window quota; continue through pages or refine your query. `include_unlisted=true` requires an approved client with that permission. MCP uses `verified_only` for the verified filter. Browse uses 25 rows per page and shares the same ranking.
+
+<a id="countries"></a>
+
+## Filter by country
+
+Choose a country in [Browse](https://agentwebmap.com/browse) or [Explore](https://agentwebmap.com/explore). REST and MCP accept the same `country` filter on listings, keyword/semantic search, task resolution, the section catalogue and section graph.
+
+
+```sh
+curl 'https://agentwebmap.com/v1/countries'
+curl 'https://agentwebmap.com/v1/domains?country=FR&category=developer-tools'
+curl 'https://agentwebmap.com/v1/search?q=payments&country=US'
+curl 'https://agentwebmap.com/v1/section-graph?sections=services&country=GB'
+curl 'https://agentwebmap.com/v1/domains?country=unknown'
+```
+
+
+Use a two-letter ISO 3166-1 country code, case-insensitive (`FR` and `fr` are equivalent); `XK` is also supported for Kosovo. `country=unknown` selects sites without an assigned location, including those masked by a CDN. Omit the filter for all countries. Invalid values return `400 invalid_country`; valid countries with no matching sites return empty results. Filters combine with AND; exact-domain resolution outside the country returns `404 no_match`.
+
+Call `GET /v1/countries` or the MCP tool `list_countries` to discover available codes, names and counts. Its `countries` array is alphabetized by name; `unknown` and `total` count valid, listed, unblocked sites. MCP accepts, for example, `list_domains({"country":"FR"})`, `resolve({"query":"payments api","country":"US"})` and `explore_sections({"sections":["services"],"country":"GB"})`.
+
+Country is inferred from a country-code domain when meaningful, otherwise from hosting IP location. It does **not** establish company headquarters, nationality, language, availability or markets served. Shared CDN edge locations are withheld. Compact and full domain results include `country` (code or null) and `country_source` (`tld`, `ip`, `cdn` or null); `cdn` explains why location was withheld. The filter does not require another crawl or a paid AI call.
+
+In the section catalogue and graph, `sites` counts and edges respect the selected country. `total_sites`, `change_7d`, emergence dates and `coverage` remain global context for the index. Counts can lag by about a minute.
 
 <a id="sections"></a>
 
@@ -183,7 +208,7 @@ Save in `.vscode/mcp.json`:
 }
 ```
 
-### Available tools (19)
+### Available tools (20)
 
 | Tool | Purpose |
 | --- | --- |
@@ -191,10 +216,11 @@ Save in `.vscode/mcp.json`:
 | `explore_sections` | Explore relationships between publisher headings |
 | `resolve` | Start here to find documentation for a domain or development task |
 | `directory_stats` | Directory-wide counts for Agent Web Map: domains tracked, valid llms.txt files, listed, verified, pending. |
+| `list_countries` | List inferred country codes and names with valid listed-site counts, plus the unknown count |
 | `list_categories` | List topic taxonomy and counts by inferred category and agentic label, unclassified sites and publisher-declared MCP endpoints |
 | `search_llms_registry` | Search domains and indexed documentation links by words and meaning |
 | `list_domains` | Ranked listing of the directory (verified first, then authority) |
-| `lookup_domain` | Look up a domain: source URLs, summary, authority, ownership verification, last check and owner-stated terms |
+| `lookup_domain` | Look up a domain: source URLs, summary, authority, ownership verification, inferred country, last check and owner-stated terms |
 | `read_llms_txt` | Return our validated copy of a listed site's llms.txt as text, with its source URL, check date and content hash |
 | `verification_instructions` | Describe optional ownership management and its four proof methods |
 | `check_llms_txt` | Validate a site's llms.txt: reachability, HTML-instead-of-text, redirects to other domains, H1 title, summary, sections, links, link health, llms-full.txt and charset |
