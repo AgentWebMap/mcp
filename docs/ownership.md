@@ -17,6 +17,14 @@ Usage separates web, REST and MCP request volumes, documentation selections and 
 
 Browser sessions expire after 12 hours. Sign back in with the saved owner API key. Sign out on shared devices; key rotation or successful ownership recovery invalidates older browser sessions.
 
+## Connect a private workspace
+
+[Sign in to your workspace](https://agentwebmap.com/workspace/signin) using a six-digit email code, then complete a fresh domain proof or sign in to /manage/your-domain with its current owner key in the same browser. The website is linked to your account. If you were already signed in to an owner dashboard, use **Connect to my workspace**.
+
+Your workspace can open linked owner dashboards while verification, key and ownership version remain current. Key rotation or ownership recovery invalidates older account bindings; reconnect with the current key or fresh proof. Email access alone never grants control over a domain. Workspace sessions last up to 30 days; owner browser sessions last 12 hours. Workspace sign-out also closes owner sessions in that browser.
+
+Favorites, private collections and the last 50 opened sources remain separate from the public directory and API/MCP data. Public discovery and standalone owner management remain available without a workspace account.
+
 ## Use REST or MCP
 
 For REST, start a fresh claim:

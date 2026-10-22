@@ -1,7 +1,4 @@
-<p align="center"><a href="https://agentwebmap.com/"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="brand/logo-dark.svg">
-  <img src="brand/logo.svg" alt="Agent Web Map" width="420">
-</picture></a></p>
+<p><a href="https://agentwebmap.com/"><strong>agentwebmap.txt</strong> — Agent Web Map</a></p>
 
 <p align="center"><a href="https://agentwebmap.com/browse">Browse and search</a> · <a href="https://agentwebmap.com/explore">Explore sections</a> · <a href="https://agentwebmap.com/stats">Statistics</a> · <a href="https://agentwebmap.com/docs">API &amp; MCP</a> · <a href="https://agentwebmap.com/manage">Manage your listing</a></p>
 
@@ -18,6 +15,8 @@ This repository is the public introduction and integration reference. The platfo
 | Goal | Open |
 |---|---|
 | Find a website or documentation for a task | [Browse and search](https://agentwebmap.com/browse) |
+| Keep favorites and private project collections | [Your workspace](https://agentwebmap.com/workspace) |
+| Start with an editorial set of sources for a task | [Curated collections](https://agentwebmap.com/collections) |
 | Explore shared publisher headings and connections | [Interactive section cloud](https://agentwebmap.com/explore) |
 | See current counts, growth and file statistics | [Statistics](https://agentwebmap.com/stats) |
 | Explore the index by inferred country | [World map](https://agentwebmap.com/map) |
@@ -29,6 +28,12 @@ This repository is the public introduction and integration reference. The platfo
 Search combines keyword and meaning-based matches when available, with keyword fallback. Task relevance comes before authority and ownership signals. Filters include categories, publisher-declared MCP capabilities, inferred agentic labels and sections extracted from indexed files.
 
 The section catalogue grows as new files and headings are indexed. The cloud connects labels shared by publishers; selecting labels reveals matching sites. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
+
+## A workspace for people
+
+The full-width, text-file interface offers light and dark modes, source previews, list and grid views, and a persistent sidebar. [Sign in with an email code](https://agentwebmap.com/workspace/signin) to save favorites, organize private collections and return to recently opened sources across browser sessions. Codes expire after ten minutes and work once in the requesting browser. Your source lists are private and separate from the public index. Copy a reference prompt, download sources.md, or connect your agent through MCP or REST.
+
+Connect verified websites to see their owner dashboards from the workspace. Email sign-in confirms access to a mailbox; domain ownership still requires a fresh proof or the current owner key. Standalone owner-key sign-in remains available. Public directory, API and MCP access require no account. [Live workspace reference](https://agentwebmap.com/docs#workspace).
 
 ## Add it
 

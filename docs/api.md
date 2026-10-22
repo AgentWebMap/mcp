@@ -2,6 +2,18 @@
 
 Free public reads. Base URL: https://agentwebmap.com.
 
+<a id="workspace"></a>
+
+## A workspace for people
+
+The [private workspace](https://agentwebmap.com/workspace) lets people save favorite sources, organize private collections, revisit recently opened sources and connect verified websites. Sign in using a six-digit email code. Codes expire after 10 minutes, work once and must be entered in the requesting browser. Browser sessions last up to 30 days, or until sign-out.
+
+Favorites, collections, email addresses and browsing history are private account data. They are not part of the public directory, REST API or MCP tools. Source prompts, MCP setup and downloadable Markdown source lists help bring saved references into your agent’s workflow; publisher files remain reference material.
+
+Email sign-in confirms access to a mailbox. To manage a website, separately confirm domain ownership or sign in with its current owner key while logged into your workspace. Changing an owner key or lapsing verification invalidates linked dashboard access until the website is reconnected. Standalone owner-key access remains available without a workspace account.
+
+The directory, public API and MCP server remain usable without signing in. [Curated collections](https://agentwebmap.com/collections) provide public, task-focused starting points; your own collections stay private.
+
 <a id="resolve"></a>
 
 ## Find a source for a task

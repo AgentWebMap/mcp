@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.11.3",
+    "version": "0.12.0",
     "description": "Agent Web Map is the directory of websites publishing llms.txt: found across the web, validated continuously and ranked by authority, with a free JSON API and MCP server so AI agents can look any site up. Public discovery has no automatic daily or pagination quotas. Usage is monitored; only explicit operator source blocks deny discovery access. Optional integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
