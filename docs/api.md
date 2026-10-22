@@ -189,20 +189,18 @@ Tools publish input/output schemas and behavior annotations. Annotations describ
 
 <a id="why-verify"></a>
 
-## Verify to manage your listing
+## What verification unlocks
 
-Verify your domain to control its listing and see activity through Agent Web Map. The [private owner dashboard](https://agentwebmap.com/manage) brings together listing controls, file health, on-demand rechecks, daily discovery activity and score history. Return to the dashboard to review the latest results. API and MCP clients can use the same owner operations.
+See how your site is discovered—and control what agents see. [Verify your website—free](https://agentwebmap.com/verify?from=docs) or [preview the owner dashboard](https://agentwebmap.com/manage/preview). Your private dashboard brings together listing controls, file health, on-demand rechecks, daily discovery activity and score history. Return to review the latest results. API and MCP clients can use the same owner operations.
 
 Listings and public discovery are usable without verification. Search-engine indexing of individual publisher profiles requires ownership verification and a valid, listed, unblocked profile. Unverified profiles stay available on the website, REST and MCP, with search indexing disabled. Verification makes a profile eligible; it does not guarantee indexing or ranking. Ownership confirmation proves domain control, not content accuracy or endorsement.
 
-- A private owner dashboard to control your listing and review activity through Agent Web Map
-- Eligibility for search-engine visibility while your profile is valid, listed and unblocked; search engines decide what to index
-- Edit your description, tags, nested llms.txt files and public contact information
-- Publish your terms for agents: automated access, rate limits, attribution and pricing
-- Review file health and request a fresh check on demand
-- See measured web, REST and MCP requests, documentation selections, publisher clicks and recent daily activity
-- Review score history over time; request counts do not identify unique agents or confirm publisher page reads
-- Domain ownership confirmation shown separately from content quality or endorsement
+- Control what agents see: Edit your listing description, tags, public contact details and additional llms.txt paths. Publish your terms for automated access, attribution and pricing.
+- Make your profile eligible for search: A valid, listed, unblocked, verified profile can appear in our publisher sitemap and become eligible for search-engine visibility. Search engines decide what to index and rank.
+- Appear in our llms-full.txt: Eligible verified publishers are listed by name, with their file links and summaries, in the service overview agents can read.
+- Review discovery activity: Your private dashboard shows measured web, REST and MCP requests, documentation selections, publisher-link clicks and daily activity. Counts include bots and repeats; they do not identify unique agents or confirm publisher page reads.
+- Check file health: Review validation results, request a fresh check on demand and follow your directory score history.
+- Show confirmed ownership: Your listing carries a domain-ownership signal. Default Browse places verified listings first; task searches prioritize relevance. Verification confirms domain control, not content quality or endorsement.
 
 An owner’s coding agent may complete verification on their behalf when authorized to manage that domain. Publish only the public proof; keep claim credentials and API keys private.
 
