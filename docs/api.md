@@ -2,6 +2,22 @@
 
 Free public reads. Base URL: https://agentwebmap.com.
 
+<a id="start"></a>
+
+## Start with a task
+
+Try a real lookup on the [homepage](https://agentwebmap.com/#task-discovery) or call the public API. No account or key is needed.
+
+1. Send a publisher and task to resolve, for example `modelcontextprotocol authorization`.
+2. Inspect `sources`, `match.strength` and `health.stale`, then read the original publisher pages. The returned excerpts are link metadata, not the full pages.
+3. Refine a weak match once, or use the publisher’s search or ordinary web search when coverage is insufficient.
+
+For repeated use, [connect an MCP client](#mcp) or use HTTP from your existing tools. The optional [discovery skill](https://github.com/AgentWebMap/mcp/tree/main/skills/agentwebmap-docs) describes when to try this workflow and when to fall back. Connection exposes tools to the client; the client decides when to use them. Publishing llms.txt or an MCP manifest does not automatically install a connection or establish persistent use.
+
+For relationships between publishers, [open the point cloud](https://agentwebmap.com/explore) or use [section discovery](#sections). Its connections come from shared file headings. Voyage embeddings power meaning-based search; AI categorization supplies inferred topics and summaries separately. Neither is needed to extract a heading.
+
+The [workspace](#workspace) is optional for people who want saved sources. Domain verification is optional for owners who want listing controls; neither is required for agent discovery.
+
 <a id="workspace"></a>
 
 ## A workspace for people

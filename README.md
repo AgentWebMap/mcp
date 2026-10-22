@@ -2,7 +2,7 @@
 
 <p align="center"><a href="https://agentwebmap.com/browse">Browse and search</a> · <a href="https://agentwebmap.com/explore">Explore sections</a> · <a href="https://agentwebmap.com/stats">Statistics</a> · <a href="https://agentwebmap.com/docs">API &amp; MCP</a> · <a href="https://agentwebmap.com/manage">Manage your listing</a></p>
 
-# Agent Web Map: the llms.txt directory for people and AI agents
+# Agent Web Map: find the next useful source for your agent
 
 [Agent Web Map](https://agentwebmap.com/) discovers and continuously validates websites publishing [llms.txt](https://agentwebmap.com/what-is-llms-txt). Search for a publisher or task, find original source links with matching evidence and freshness, and explore connections between the sections publishers include in their files.
 
@@ -10,10 +10,19 @@ People use the [website](https://agentwebmap.com/browse). Agents use the same in
 
 This repository is the public introduction and integration reference. The platform's application, crawler and infrastructure are maintained separately.
 
+## Start with a task
+
+[Try a real lookup on the homepage](https://agentwebmap.com/#task-discovery). Enter a publisher and task, inspect the original source links and actual API response, then read the publisher's pages. Match strength and stale flags make missing or older evidence visible. Refine weak results or use the publisher's search when coverage is insufficient.
+
+For repeated use, [connect MCP](#add-it), use the public HTTP API, or explicitly install the optional [discovery skill](skills/agentwebmap-docs/SKILL.md) through your client's workflow. The skill describes when to try discovery, read primary sources and fall back. Connections make tools available; the host decides when to call them. An llms.txt or discovery manifest does not automatically install a connection or establish persistent agent adoption. [First-use workflow](https://agentwebmap.com/docs#start).
+
+The service combines task-focused source discovery, explicit freshness and provenance, a growing graph of shared publisher headings, and optional verified publisher controls. The workspace supports people who want to inspect and save sources; discovery remains available without signing in.
+
 ## Start on the website
 
 | Goal | Open |
 |---|---|
+| Try a task and inspect the actual response | [Live task lookup](https://agentwebmap.com/#task-discovery) |
 | Find a website or documentation for a task | [Browse and search](https://agentwebmap.com/browse) |
 | Keep favorites and private project collections | [Your workspace](https://agentwebmap.com/workspace) |
 | Start with an editorial set of sources for a task | [Curated collections](https://agentwebmap.com/collections) |
@@ -27,7 +36,7 @@ This repository is the public introduction and integration reference. The platfo
 
 Search combines keyword and meaning-based matches when available, with keyword fallback. Task relevance comes before authority and ownership signals. Filters include categories, publisher-declared MCP capabilities, inferred agentic labels and sections extracted from indexed files.
 
-The section catalogue grows as new files and headings are indexed. The cloud connects labels shared by publishers; selecting labels reveals matching sites. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
+The section catalogue grows as new files and headings are indexed. The point cloud connects labels shared by publishers; selecting labels reveals matching sites. These relationships come from heading co-occurrence, independently of meaning-based search and AI topic classification. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
 
 ## A workspace for people
 
@@ -92,7 +101,7 @@ curl --get https://agentwebmap.com/v1/resolve \
 
 ## MCP tools
 
-The hosted server exposes **19 tools**, checked on 21 October 2026. `tools/list` is the live inventory.
+The hosted server exposes **19 tools**, checked on 22 October 2026. `tools/list` is the live inventory.
 
 | Tool | Purpose |
 |---|---|

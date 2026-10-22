@@ -4,6 +4,8 @@
 
 For agents, the same catalogue and relationships are available through [the JSON API](https://agentwebmap.com/docs#sections) and [MCP](https://agentwebmap.com/docs#mcp).
 
+The point cloud uses heading co-occurrence: an edge means distinct publishers share both labels. Heading extraction works independently of semantic-search embeddings and AI-inferred categories. The graph's visual distance is an approximate arrangement, not a measurement of meaning or a verified business relationship. [Try task discovery separately](https://agentwebmap.com/#task-discovery).
+
 ## Discover real labels first
 
 Use [`GET /v1/sections?sort=common&per_page=20`](https://agentwebmap.com/v1/sections?sort=common&per_page=20), or call MCP `list_sections` with `sort: "common"` and `per_page: 20`.
