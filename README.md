@@ -38,6 +38,8 @@ Search combines keyword and meaning-based matches when available, with keyword f
 
 [Filter by country](https://agentwebmap.com/docs#countries) in Browse or the section cloud, or pass `country=FR` / `country=unknown` through REST and MCP. [`GET /v1/countries`](https://agentwebmap.com/v1/countries) and `list_countries` expose available codes and listed-site counts. Country reflects domain or hosting location; it does not establish company headquarters or markets served.
 
+For agent-readable orientation, [llms.txt](https://agentwebmap.com/llms.txt) is the concise service guide. [llms-full.txt](https://agentwebmap.com/llms-full.txt) includes the complete platform/API/MCP reference generated from the same documentation as [docs.md](https://agentwebmap.com/docs.md), plus eligible owner-verified publishers. The guides cover country and section filters, the point cloud, public collections, optional private workspaces and owner management. Private account and admin records are excluded; unverified publishers remain discoverable through the public API.
+
 The section catalogue grows as new files and headings are indexed. The point cloud connects labels shared by publishers; selecting labels reveals matching sites. These relationships come from heading co-occurrence, independently of meaning-based search and AI topic classification. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
 
 ## A workspace for people

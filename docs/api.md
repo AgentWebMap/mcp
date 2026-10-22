@@ -22,7 +22,7 @@ The [workspace](#workspace) is optional for people who want saved sources. Domai
 
 ## A workspace for people
 
-The [private workspace](https://agentwebmap.com/workspace) lets people save favorite sources, organize private collections, revisit recently opened sources and connect verified websites. Sign in using a six-digit email code. Codes expire after 10 minutes, work once and must be entered in the requesting browser. Browser sessions last up to 30 days, or until sign-out.
+The [private workspace](https://agentwebmap.com/workspace) lets people save favorite sources, organize private collections, revisit recently opened sources and connect verified websites. [Sign in](https://agentwebmap.com/workspace/signin) using a six-digit email code. Codes expire after 10 minutes, work once and must be entered in the requesting browser. Browser sessions last up to 30 days, or until sign-out.
 
 Favorites, collections, email addresses and browsing history are private account data. They are not part of the public directory, REST API or MCP tools. Source prompts, MCP setup and downloadable Markdown source lists help bring saved references into your agent’s workflow; publisher files remain reference material.
 
@@ -153,7 +153,7 @@ curl -i 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io/llms.txt'
 
 The response is `text/plain`, with `X-Source-URL`, `X-Checked-At`, `X-Content-Hash` and `X-Truncated` headers. A size-limited copy is marked as truncated. The MCP tool `read_llms_txt` returns the content inline with the same metadata. Files not yet cached are fetched on demand with bounded work per call. Invalid files return `409`; unavailable copies return an error rather than an invented file.
 
-[Our llms.txt](https://agentwebmap.com/llms.txt) describes this service. [Our llms-full.txt](https://agentwebmap.com/llms-full.txt) lists valid sites whose owners have verified their domains, with their file links and summaries. The full searchable directory remains available through the API.
+[Our llms.txt](https://agentwebmap.com/llms.txt) is a concise service guide with discovery, country filters, publisher sections, public collections, private workspaces and owner tools. [Our llms-full.txt](https://agentwebmap.com/llms-full.txt) includes this complete platform/API/MCP reference, generated from the same documentation sections, followed by eligible valid, listed, unblocked sites whose owners have verified their domains. Those entries include file links and summaries. The full searchable directory remains available through the API; unverified publishers are not enumerated in the full file. Private workspace and admin data are excluded.
 
 <a id="statistics"></a>
 
