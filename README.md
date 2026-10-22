@@ -10,6 +10,8 @@ People use the [website](https://agentwebmap.com/browse). Agents use the same in
 
 This repository is the public introduction and integration reference. The platform's application, crawler and infrastructure are maintained separately.
 
+We build on the original [llms.txt proposal](https://llmstxt.org/) by Jeremy Howard. [Meet the llms.txt project](https://agentwebmap.com/llms-txt-project), read its [upstream source](https://github.com/AnswerDotAI/llms-txt), and see how our independent directory uses the convention.
+
 ## Start with a task
 
 [Try a real lookup on the homepage](https://agentwebmap.com/#task-discovery). Enter a publisher and task, inspect the original source links and actual API response, then read the publisher's pages. Match strength and stale flags make missing or older evidence visible. Refine weak results or use the publisher's search when coverage is insufficient.

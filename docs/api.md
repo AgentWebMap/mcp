@@ -155,6 +155,14 @@ The response is `text/plain`, with `X-Source-URL`, `X-Checked-At`, `X-Content-Ha
 
 [Our llms.txt](https://agentwebmap.com/llms.txt) is a concise service guide with discovery, country filters, publisher sections, public collections, private workspaces and owner tools. [Our llms-full.txt](https://agentwebmap.com/llms-full.txt) includes this complete platform/API/MCP reference, generated from the same documentation sections, followed by eligible valid, listed, unblocked sites whose owners have verified their domains. Those entries include file links and summaries. The full searchable directory remains available through the API; unverified publishers are not enumerated in the full file. Private workspace and admin data are excluded.
 
+<a id="project"></a>
+
+## The llms.txt project
+
+The original [llms.txt proposal](https://llmstxt.org/) was first published by Jeremy Howard in September 2024. Its reference site explains the format and links to the public [AnswerDotAI/llms-txt project](https://github.com/AnswerDotAI/llms-txt).
+
+[Our introduction to the project](https://agentwebmap.com/llms-txt-project.md) credits the upstream work and explains how Agent Web Map uses the convention. Agent Web Map is an independent discovery service: we index and validate publisher files, provide source discovery and map shared headings. For format definitions, consult the original proposal.
+
 <a id="statistics"></a>
 
 ## Directory statistics
