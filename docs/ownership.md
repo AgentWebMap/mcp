@@ -2,13 +2,15 @@
 
 Sites can be discovered, crawled and listed without an account, ownership confirmation or a backlink. Public REST/MCP discovery remains free of owner credentials. Ownership confirmation lets a publisher edit its profile, publish terms for agents, recheck file health and inspect measured activity and score history. It confirms control of a domain, without endorsing the site's content.
 
+Verification only confirms you can update the website. Your website and domain remain yours. The llms.txt method uses a line beginning `AgentWebMap verification:` followed by the code provided for your check.
+
 Search-engine visibility for an individual publisher profile requires ownership verification and a valid, listed, unblocked listing. Unverified profiles remain usable on the website and through REST/MCP, with search indexing disabled. Eligible verified profiles appear in the sitemap; indexing and ranking are decided by the search engine. Verification does not override quality or visibility rules. [Preview the owner dashboard](https://agentwebmap.com/manage/preview) or [verify your website for free](https://agentwebmap.com/verify?from=github). The preview is illustrative and includes no live publisher data.
 
 ## Use the browser
 
-1. Open [Manage your listing](https://agentwebmap.com/manage), enter your domain and choose **Start ownership check**. You can also visit `https://agentwebmap.com/manage/example.com` directly.
+1. Open [Manage your listing](https://agentwebmap.com/manage), enter your domain and choose **Start verification**. You can also visit `https://agentwebmap.com/manage/example.com` directly.
 2. Choose one proof method: a DNS TXT record, homepage meta tag, well-known proof file or a plain token line in llms.txt. Copy the provided snippet and publish it on your site or DNS. No backlink is required.
-3. Choose **Check ownership** in the same browser. If a website cache or DNS update has not propagated, the page shows which checks found the proof; retry after the update is visible. A challenge expires after 30 minutes. Start a fresh check and publish its new token if the previous one expires.
+3. Choose **Verify website** in the same browser. If the change has not appeared yet, the page keeps your selected method and shows its result. Follow that method's guidance and retry after publishing the change. A challenge expires after 30 minutes. Start a new check and publish its new code if the previous one expires.
 4. Save the owner API key shown after success. The browser also signs you into the owner dashboard. The key is displayed once, with copy and download controls.
 
 The dashboard supports profile descriptions, tags, contact information, an owner-declared publisher country, nested llms.txt paths and structured agent terms. It shows current file health, measured website/REST/MCP requests, documentation selections and publisher clicks. Return to review daily discovery activity and the last 30 score snapshots, or request a fresh directory check with **Recheck llms.txt now** (once per 10 minutes).
