@@ -7,7 +7,7 @@ description: Discover relevant official documentation through Agent Web Map when
 
 Find a small set of useful source pages, read them, and return to the user's development task. Use an already connected Agent Web Map MCP server or public HTTP; do not install tools or modify client configuration merely to use this workflow.
 
-Public discovery needs no account or API key and has no automatic daily usage or result-window quotas across REST, MCP and web. Usage is monitored; the operator can explicitly block a source. A manual block returns `403 access_blocked`; use another discovery source instead of evading the block. Pages hold at most 100 results. Unlisted enumeration needs explicit permission. Optional integration keys are separate from domain owner keys. See https://agentwebmap.com/docs#limits.
+Public discovery needs no account or API key. Pages hold at most 100 results. A manual access block returns `403 access_blocked`; use another discovery source instead of evading the block. Owner credentials are separate from public discovery. See https://agentwebmap.com/docs#limits.
 
 ## Resolve the task
 
@@ -15,9 +15,13 @@ Call `resolve` with the publisher and task when known, for example `{"query":"mo
 
 Inspect `sources`, `match`, `health`, and `terms`. `sources[].excerpt` comes from the publisher's llms.txt link descriptions or headings, not from reading the full destination page. `source_url`, `checked_at`, and `content_hash` identify the indexed evidence. An authority score or verified owner does not establish technical correctness.
 
-When the task asks for a type of provider and a category filter would help, call `list_categories` or `GET https://agentwebmap.com/v1/categories` to obtain current IDs, then pass `category` to resolve, search or listing. Categories combine rules and model-inferred labels over publisher metadata. Empty categories mean insufficient evidence; full domain detail exposes `category_evidence` when the reasoning matters. Category confidence is a heuristic score, not a probability. Do not add a category filter when it would unnecessarily exclude relevant uncategorized sources.
+When the task asks for a type of provider and a category filter would help, call `list_categories` or `GET https://agentwebmap.com/v1/categories` to obtain current IDs, then pass `category` to resolve, search or listing. Categories describe inferred topics from publisher material. Empty categories mean insufficient evidence; full domain detail exposes `category_evidence` when the reasoning matters. Category confidence is a heuristic score, not a probability. Do not add a category filter when it would unnecessarily exclude relevant uncategorized sources.
 
 For shared publisher headings, call `list_sections` before selecting keys. Use those keys in `explore_sections`, search or listing with `sections` and `section_match: "all" | "any"`. Labels grow with indexed files; partial coverage is reported. A heading describes content rather than proving an available action. Human explorer: https://agentwebmap.com/explore.
+
+To find alternatives to a known publisher, use `similar_sites` with its `domain`, optionally narrowed by `country` and `action`. REST equivalent: `GET https://agentwebmap.com/v1/similar/cloudflare.com?limit=6`. Inspect returned publishers and shared headings; similarity does not establish affiliation or equivalent capabilities. Respect `available=false` instead of treating an empty result as proof that no related publishers exist.
+
+Use `connections: "semantic"` in `explore_sections` when the task benefits from related heading meanings. Keep those inferred links distinct from observed shared headings. Obtain country codes and category IDs from their discovery tools; inferred actions can narrow relevant operations, but do not authorize execution.
 
 For a documentation task specifically needing an MCP provider, `capability: "mcp"` filters to explicit same-publisher endpoint declarations. Inspect `capability_evidence` with full domain detail. `status: "publisher_declared"` means the endpoint has not been validated; generic MCP mentions and business categories are insufficient. Read endpoint documentation before connecting and validate availability, authentication and relevant tools separately. Discovery does not itself authorize tool invocation.
 

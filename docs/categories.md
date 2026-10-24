@@ -6,7 +6,7 @@ Use categories to narrow documentation discovery by the publisher's subject or b
 
 `GET https://agentwebmap.com/v1/categories` or MCP `list_categories` returns `taxonomy_version`, `categories`, `uncategorized`, and `capabilities`.
 
-Each category has an id, label, description and count. The current taxonomy has 52 categories; rule version 2. Read the endpoint for current IDs.
+Each category has an id, label, description and count. Read the live endpoint for current IDs and counts; categories can evolve as the directory improves.
 
 | ID | Label |
 |---|---|
@@ -63,7 +63,7 @@ Each category has an id, label, description and count. The current taxonomy has 
 | `telecom` | Telecom |
 | `travel` | Travel |
 
-Counts cover unblocked `listed` and `featured` domains, matching the default browsable directory. Sites can have up to five categories, so counts overlap. Empty `categories: []` means the rules found insufficient evidence; it does not mean a site is low quality or unsafe. A newly indexed or not-yet-backfilled site can also lack classification. `uncategorized` includes both empty cases. Discover current IDs and descriptions from the endpoint rather than inventing a filter value.
+Counts cover the public browsable directory. A website can have several categories, so totals overlap. Empty `categories: []` means no category is currently available; it does not establish low quality or unsafe content. Discover current IDs and descriptions from the endpoint rather than inventing a filter value.
 
 ## Filter a discovery task
 
@@ -87,12 +87,12 @@ Category and capability filters combine with AND when both are supplied. Invalid
 Compact domain responses include `categories`. Request `detail=full` on a domain lookup to inspect:
 
 - `category_evidence`: entries with `id`, `confidence`, `evidence` (publisher metadata snippets), and `source: "publisher_metadata"`.
-- `category_version`: the rules version used for the classification.
+- `category_version`: the version associated with the stored classification.
 - `categorized_at`: when stored classification was computed.
 
 Categories are inferred labels that help narrow discovery. A site can have several labels or remain uncategorized when evidence is insufficient. Inspect the returned publisher evidence when deciding whether a label fits your task.
 
-`confidence` is a rule-strength score from 0 to 1, not a calibrated probability or verified business claim. Evidence is publisher-provided and may be incomplete, outdated or wrong. Ownership verification, authority, source health and category confidence answer different questions. Fetch the original source when the classification matters to a decision.
+`confidence` is an inferred evidence signal, not a calibrated probability or verified business claim. Evidence is publisher-provided and may be incomplete, outdated or wrong. Ownership verification, authority, source health and category confidence answer different questions. Fetch the original source when the classification matters to a decision.
 
 ## Find a publisher-declared MCP endpoint
 
@@ -110,16 +110,26 @@ curl --get --fail-with-body https://agentwebmap.com/v1/domains \
 
 The `capability` filter is also accepted by search and resolve. Compact domain responses include `capabilities: ["mcp"]` when qualifying evidence exists; an empty array means no qualifying declaration was indexed. Full responses expose `capability_evidence` with `id`, `url`, `source_url`, and `status: "publisher_declared"`.
 
-Detection requires a publisher-provided link explicitly labeled as an MCP server, endpoint or Model Context Protocol, with a same-publisher URL ending in `/mcp` or `/sse`. Documentation links are excluded. A generic mention of MCP, an AI-related category, or an unrelated third-party endpoint does not qualify.
+A generic mention of MCP or an AI-related category is different from a publisher-declared endpoint. Inspect the returned declaration and its source before treating it as an integration candidate.
 
-**Publisher-declared does not mean validated or working.** The classifier does not contact the endpoint, complete an MCP handshake, inspect its tools, or prove its authentication and terms fit the task. Treat returned endpoint URLs as discovery candidates; inspect their documentation and validate the endpoint through an appropriate client before relying on it. Category metadata alone does not authorize connecting or invoking tools.
+**Publisher-declared does not mean validated or working.** Treat returned endpoint URLs as discovery candidates; inspect their documentation and validate availability, relevant tools, authentication and terms through an appropriate client. Category metadata alone does not authorize connecting or invoking tools.
 
-## Stored classification and backfill
+## Classification and coverage
 
-New crawls compute classification from publisher metadata, including an opening prose description when a publisher does not use a blockquote summary. The crawler automatically processes stored rows whose classification version is stale in bounded batches; changing the rules version schedules reassessment from stored metadata without fetching each site again. Newly indexed documentation also triggers classification using its richer evidence. Reclassification updates category and declared capability metadata from stored evidence. It does not validate a declared MCP endpoint. Versioned rules make later classification changes reviewable. The separate documentation backfill has request, worker and time budgets, and failed attempts back off instead of blocking other publishers. Directory coverage and counts change as crawling and backfills progress; an uncategorized result remains valid when evidence is insufficient.
+Categories describe inferred publisher topics. Metadata can be incomplete or wrong, and some sites remain uncategorized. Full responses expose evidence when available. Category totals overlap because one website can cover several topics. An ownership badge establishes domain control, not the correctness of a category.
 
 ## Agentic labels
 
 Listings also carry an inferred `agentic` field: `interface` for an API or declared MCP endpoint, `transactional` for buying/booking, `documentation` for docs to read, or `informational` for general content. Unlabelled sites return null. Filter search, list and resolve with `agentic=<value>`; this combines with category and capability filters. These hints do not certify an endpoint or authorize transactions.
 
-Public categories combine deterministic rules with model-inferred categories where available. Each site counts at most once within a category, even when both sources agree. Category totals overlap across different categories. Full responses retain the underlying evidence.
+Each site counts at most once within a category. Totals overlap across different categories, and full responses retain available evidence.
+
+## Filter by inferred action
+
+Use `action=read_docs`, `search_content`, `call_api`, `buy`, `book`, `download_data` or `contact_support` alongside country/category filters where supported. These actions can overlap; they do not prove a working integration or authorize a transaction.
+
+```sh
+curl 'https://agentwebmap.com/v1/domains?category=finance-payments&action=call_api&country=FR'
+```
+
+MCP uses the same `action` argument. [Current action reference](https://agentwebmap.com/docs#actions).

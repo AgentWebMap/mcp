@@ -11,7 +11,7 @@ Search-engine visibility for an individual publisher profile requires ownership 
 3. Choose **Check ownership** in the same browser. If a website cache or DNS update has not propagated, the page shows which checks found the proof; retry after the update is visible. A challenge expires after 30 minutes. Start a fresh check and publish its new token if the previous one expires.
 4. Save the owner API key shown after success. The browser also signs you into the owner dashboard. The key is displayed once, with copy and download controls.
 
-The dashboard supports profile descriptions, tags, contact information, nested llms.txt paths and structured agent terms. It shows current file health, measured website/REST/MCP requests, documentation selections and publisher clicks. Return to review daily discovery activity and the last 30 score snapshots, or request a fresh directory check with **Recheck llms.txt now** (once per 10 minutes).
+The dashboard supports profile descriptions, tags, contact information, an owner-declared publisher country, nested llms.txt paths and structured agent terms. It shows current file health, measured website/REST/MCP requests, documentation selections and publisher clicks. Return to review daily discovery activity and the last 30 score snapshots, or request a fresh directory check with **Recheck llms.txt now** (once per 10 minutes).
 
 Usage separates web, REST and MCP request volumes, documentation selections and publisher referrals. These are aggregate events, including possible bots, tests and repeated calls. They do not establish unique agents, confirmed publisher-page reads or individual return visits. See [the live owner reference](https://agentwebmap.com/docs#manage) for reporting details. Listing health and activity are reviewed in the dashboard; outbound owner notifications have been retired.
 
@@ -67,4 +67,10 @@ Existing owner API keys remain valid, and existing public proofs continue to sup
 
 Ownership completion changed: a bare `POST /verify` or `verify_domain` call no longer issues a key. New clients must start a fresh claim and send its private credentials with the proof check. If recovering access, replace the old public proof with the fresh challenge's snippet. The fresh challenge is single-use and expires; it does not expose a reusable public key-issuance mechanism.
 
-Search continues to prioritize relevance. Confirmed owners still lead browse listings, contribute 15 authority points and have the existing lower featured threshold. These directory signals are separate from content correctness; profile management, useful source links, measured request volumes, file health and score history are the practical reasons to manage a listing.
+Search continues to prioritize relevance. Confirmed owners receive an ownership signal in directory listings. Profile management, useful source links, measured discovery activity, file health and score history are the practical reasons to manage a listing; verification does not establish content correctness.
+
+## Publisher country
+
+Verified owners can set or clear `publisher_country` through the dashboard, `PATCH /v1/sites/{domain}` or MCP `update_site`. Use a two-letter country code; null clears the owner declaration. The response labels it as owner-declared, and domain verification does not independently verify the location.
+
+Country responses can also carry published organization-address evidence, domain or hosting signals. Review the source before interpreting it as a business address. [Country reference](https://agentwebmap.com/docs#countries).

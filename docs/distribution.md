@@ -4,14 +4,17 @@ AgentWebMap helps AI agents find relevant publisher documentation through an exi
 
 ## Ready listing description
 
-**Name:** AgentWebMap
+**Name:** Agent Web Map
 
-**Short description:** Find publisher documentation through a free llms.txt discovery API and MCP server.
+**Short description:** An llms.txt directory for AI agents: find documentation, explore related websites and save useful sources.
 
-**Description:** AgentWebMap indexes websites publishing llms.txt and resolves domains or development tasks into original documentation URLs, publisher-provided matching evidence and stored freshness information. Public reads require no API key. Agents can connect through Streamable HTTP MCP or REST; a dependency-aware Node.js CLI previews recognized package-to-publisher mappings before requesting sources. Verified owners can control their listing and return to a private dashboard for file health, measured discovery activity and score history. Coverage is incomplete, and consumers should read original pages and fall back when evidence is missing, weak or stale.
+**Description:** Agent Web Map discovers and validates websites publishing llms.txt. Search for a publisher or task, inspect original source links and check dates, or explore shared headings and related publishers in the interactive point cloud. Country, topic and inferred-action filters work across the website and public tools. Agents connect through a free JSON API or hosted MCP server without a public-read key. People can save favorites and private collections in an optional workspace. Verified owners can manage their listing and review file health and measured discovery activity. Read the original publisher pages when using a result.
 
 **Links:**
 
+- Try a task: [live homepage lookup](https://agentwebmap.com/#task-discovery)
+- Interactive relationships: [point cloud](https://agentwebmap.com/explore)
+- Public starting points: [curated collections](https://agentwebmap.com/collections)
 - Website search: [agentwebmap.com/browse](https://agentwebmap.com/browse)
 - Client setup, docs and examples: [github.com/AgentWebMap/mcp](https://github.com/AgentWebMap/mcp)
 - MCP endpoint: `https://agentwebmap.com/mcp`

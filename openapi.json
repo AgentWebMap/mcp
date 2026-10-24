@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.14.2",
+    "version": "0.23.5",
     "description": "Agent Web Map is the directory of websites publishing llms.txt: found across the web, validated continuously and ranked by authority, with a free JSON API and MCP server so AI agents can look any site up. Public discovery has no automatic daily or pagination quotas. Usage is monitored; only explicit operator source blocks deny discovery access. Optional integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
@@ -316,9 +316,27 @@
             "schema": {
               "type": "string",
               "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
-              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
             },
-            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
           },
           {
             "name": "max_age",
@@ -433,6 +451,106 @@
         }
       }
     },
+    "/v1/similar/{domain}": {
+      "get": {
+        "operationId": "similarSites",
+        "summary": "Related publishers by vector similarity",
+        "description": "Find related publishers and actual shared section keys. Similarity does not establish affiliation or capabilities. Unavailable similarity information returns available=false and a reason.",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+            },
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimilarSites"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/stats": {
       "get": {
         "operationId": "getStats",
@@ -455,7 +573,7 @@
       "get": {
         "operationId": "listSections",
         "summary": "Publisher heading catalogue, distinct-site counts, emerging labels and coverage",
-        "description": "Labels come from the indexed corpus. Emerging excludes the initial backfill. Seven-day changes count net site memberships after the baseline; headings do not certify capabilities.",
+        "description": "Labels come from the indexed corpus. Newest shows labels observed after the baseline. Emerging additionally requires positive seven-day growth, ten estimated domain-name families from complete files without known templates/duplicates, and three days of observation. These are index signals, not adoption dates. Seven-day changes count net site memberships after the baseline; headings do not certify capabilities.",
         "parameters": [
           {
             "name": "q",
@@ -473,6 +591,7 @@
               "enum": [
                 "common",
                 "alphabetical",
+                "newest",
                 "emerging"
               ],
               "default": "common"
@@ -504,9 +623,27 @@
             "schema": {
               "type": "string",
               "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
-              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
             },
-            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
           },
           {
             "name": "sections",
@@ -606,9 +743,27 @@
             "schema": {
               "type": "string",
               "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
-              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
             },
-            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
           },
           {
             "name": "sections",
@@ -630,6 +785,19 @@
               ],
               "default": "all"
             }
+          },
+          {
+            "name": "connections",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "shared",
+                "semantic"
+              ],
+              "default": "shared"
+            },
+            "description": "Semantic adds separately labeled inferred heading similarities without changing shared-heading counts."
           },
           {
             "name": "include_sites",
@@ -853,9 +1021,27 @@
             "schema": {
               "type": "string",
               "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
-              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
             },
-            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
           },
           {
             "name": "sections",
@@ -936,7 +1122,7 @@
     "/v1/countries": {
       "get": {
         "operationId": "listCountries",
-        "summary": "Available inferred countries and listed-site counts, including unknown locations",
+        "summary": "Available country signals and listed-site counts, including unknown locations",
         "responses": {
           "200": {
             "description": "OK",
@@ -1130,9 +1316,27 @@
             "schema": {
               "type": "string",
               "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
-              "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
             },
-            "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
           },
           {
             "name": "sections",
@@ -1368,7 +1572,7 @@
     "/v1/sites": {
       "post": {
         "operationId": "registerSite",
-        "summary": "Submit a domain for crawling and get verification instructions",
+        "summary": "Submit a public domain or request an update; same-domain requests coalesce with a ten-minute cooldown",
         "requestBody": {
           "required": true,
           "content": {
@@ -1392,7 +1596,7 @@
         },
         "responses": {
           "200": {
-            "description": "Already tracked",
+            "description": "No new crawl queued; inspect reason and retry_after",
             "content": {
               "application/json": {
                 "schema": {
@@ -1402,7 +1606,7 @@
             }
           },
           "202": {
-            "description": "Queued",
+            "description": "Crawl queued",
             "content": {
               "application/json": {
                 "schema": {
@@ -2446,7 +2650,7 @@
               "string",
               "null"
             ],
-            "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+            "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
           },
           "country_source": {
             "type": [
@@ -2454,12 +2658,39 @@
               "null"
             ],
             "enum": [
+              "owner",
+              "structured_data",
+              "contact_page",
               "tld",
               "ip",
               "cdn",
               null
             ],
-            "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+            "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+          },
+          "publisher_country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publisher_country_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "owner",
+              "structured_data",
+              "contact_page",
+              null
+            ]
+          },
+          "hosting_country": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "platform_generated": {
             "type": [
@@ -2669,6 +2900,58 @@
               "benefits"
             ],
             "additionalProperties": false
+          },
+          "domain_country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country_checked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country_status": {
+            "type": "string"
+          },
+          "country_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "country": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "method": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "country",
+                "source",
+                "url",
+                "checked_at",
+                "method"
+              ],
+              "additionalProperties": false
+            }
           },
           "why": {
             "type": "array",
@@ -3096,7 +3379,7 @@
               "string",
               "null"
             ],
-            "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+            "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
           },
           "country_source": {
             "type": [
@@ -3104,12 +3387,39 @@
               "null"
             ],
             "enum": [
+              "owner",
+              "structured_data",
+              "contact_page",
               "tld",
               "ip",
               "cdn",
               null
             ],
-            "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+            "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+          },
+          "publisher_country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publisher_country_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "owner",
+              "structured_data",
+              "contact_page",
+              null
+            ]
+          },
+          "hosting_country": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "platform_generated": {
             "type": [
@@ -3441,7 +3751,7 @@
                     "string",
                     "null"
                   ],
-                  "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+                  "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
                 },
                 "country_source": {
                   "type": [
@@ -3449,12 +3759,39 @@
                     "null"
                   ],
                   "enum": [
+                    "owner",
+                    "structured_data",
+                    "contact_page",
                     "tld",
                     "ip",
                     "cdn",
                     null
                   ],
-                  "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+                  "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+                },
+                "publisher_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "publisher_country_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "owner",
+                    "structured_data",
+                    "contact_page",
+                    null
+                  ]
+                },
+                "hosting_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "platform_generated": {
                   "type": [
@@ -3664,6 +4001,58 @@
                     "benefits"
                   ],
                   "additionalProperties": false
+                },
+                "domain_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "country_checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "country_status": {
+                  "type": "string"
+                },
+                "country_evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "country": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "checked_at": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "method": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "country",
+                      "source",
+                      "url",
+                      "checked_at",
+                      "method"
+                    ],
+                    "additionalProperties": false
+                  }
                 },
                 "why": {
                   "type": "array",
@@ -4114,7 +4503,7 @@
                   "string",
                   "null"
                 ],
-                "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+                "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
               },
               "country_source": {
                 "type": [
@@ -4122,12 +4511,39 @@
                   "null"
                 ],
                 "enum": [
+                  "owner",
+                  "structured_data",
+                  "contact_page",
                   "tld",
                   "ip",
                   "cdn",
                   null
                 ],
-                "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+                "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+              },
+              "publisher_country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "publisher_country_source": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "owner",
+                  "structured_data",
+                  "contact_page",
+                  null
+                ]
+              },
+              "hosting_country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "platform_generated": {
                 "type": [
@@ -4337,6 +4753,58 @@
                   "benefits"
                 ],
                 "additionalProperties": false
+              },
+              "domain_country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country_checked_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country_status": {
+                "type": "string"
+              },
+              "country_evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "country": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "checked_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "method": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "country",
+                    "source",
+                    "url",
+                    "checked_at",
+                    "method"
+                  ],
+                  "additionalProperties": false
+                }
               },
               "why": {
                 "type": "array",
@@ -4686,6 +5154,15 @@
                   "string",
                   "null"
                 ]
+              },
+              "documentation_indexed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "recheck_queued": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -4789,7 +5266,13 @@
             "type": "object",
             "properties": {
               "selection": {
-                "const": "directory"
+                "enum": [
+                  "directory",
+                  "directory+semantic"
+                ]
+              },
+              "reranked": {
+                "type": "boolean"
               },
               "verification": {
                 "const": "domain_ownership"
@@ -5016,6 +5499,106 @@
           },
           "error": {
             "type": "string"
+          },
+          "health": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "valid",
+                  "invalid",
+                  "unreachable"
+                ]
+              },
+              "tier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "featured",
+                  "listed",
+                  "unlisted",
+                  "rejected",
+                  null
+                ]
+              },
+              "authority": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "last_checked": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "checked_minutes_ago": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "max_age_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "live_checked": {
+                "type": "boolean"
+              },
+              "http_status": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "last_valid": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "content_hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "documentation_indexed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "recheck_queued": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "ok",
+              "status",
+              "tier",
+              "authority",
+              "last_checked",
+              "checked_minutes_ago",
+              "stale",
+              "max_age_seconds",
+              "live_checked",
+              "http_status",
+              "last_valid",
+              "content_hash"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -5180,6 +5763,15 @@
               "string",
               "null"
             ]
+          },
+          "documentation_indexed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recheck_queued": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -5314,6 +5906,12 @@
           },
           "queued": {
             "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "retry_after": {
+            "type": "integer"
           },
           "lookup": {
             "type": "string"
@@ -5579,6 +6177,14 @@
               "null"
             ],
             "maxLength": 200
+          },
+          "publisher_country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Za-z]{2}$",
+            "description": "Owner-declared publisher address country; null clears the declaration. Domain verification does not independently verify location."
           },
           "agent_terms": {
             "anyOf": [
@@ -5878,7 +6484,7 @@
               "string",
               "null"
             ],
-            "description": "Inferred country code, or null when unknown. Not verified headquarters or markets served."
+            "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
           },
           "country_source": {
             "type": [
@@ -5886,12 +6492,39 @@
               "null"
             ],
             "enum": [
+              "owner",
+              "structured_data",
+              "contact_page",
               "tld",
               "ip",
               "cdn",
               null
             ],
-            "description": "tld: country-code domain; ip: hosting location; cdn: location withheld; null: unavailable or not assigned."
+            "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+          },
+          "publisher_country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publisher_country_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "owner",
+              "structured_data",
+              "contact_page",
+              null
+            ]
+          },
+          "hosting_country": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "platform_generated": {
             "type": [
@@ -6101,6 +6734,58 @@
               "benefits"
             ],
             "additionalProperties": false
+          },
+          "domain_country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country_checked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country_status": {
+            "type": "string"
+          },
+          "country_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "country": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "method": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "country",
+                "source",
+                "url",
+                "checked_at",
+                "method"
+              ],
+              "additionalProperties": false
+            }
           },
           "why": {
             "type": "array",
@@ -7088,7 +7773,7 @@
       "CountryFilter": {
         "type": "string",
         "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
-        "description": "Inferred country: ISO 3166-1 alpha-2 code (XK also supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists available codes and counts. Not company headquarters or markets served."
+        "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
       },
       "SectionCatalogue": {
         "type": "object",
@@ -7130,6 +7815,25 @@
                 },
                 "change_7d": {
                   "type": "integer"
+                },
+                "trend_evidence": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "publisher_groups": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "publisher_groups"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -7139,10 +7843,14 @@
                 "total_sites",
                 "first_seen",
                 "emerged_at",
-                "change_7d"
+                "change_7d",
+                "trend_evidence"
               ],
               "additionalProperties": false
             }
+          },
+          "trend_policy": {
+            "type": "string"
           },
           "filters": {
             "type": "object",
@@ -7160,6 +7868,12 @@
                 ]
               },
               "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "action": {
                 "type": [
                   "string",
                   "null"
@@ -7213,6 +7927,7 @@
           "page",
           "per_page",
           "results",
+          "trend_policy",
           "filters",
           "coverage"
         ],
@@ -7240,6 +7955,9 @@
                 },
                 "selected": {
                   "type": "boolean"
+                },
+                "semantic_related": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -7247,7 +7965,8 @@
                 "label",
                 "sites",
                 "total_sites",
-                "selected"
+                "selected",
+                "semantic_related"
               ],
               "additionalProperties": false
             }
@@ -7332,6 +8051,66 @@
               "additionalProperties": false
             }
           },
+          "semantic_edges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string"
+                },
+                "strength": {
+                  "type": "number"
+                },
+                "similarity": {
+                  "type": "number"
+                },
+                "kind": {
+                  "const": "semantic"
+                }
+              },
+              "required": [
+                "source",
+                "target",
+                "strength",
+                "similarity",
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "semantic": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "indexed": {
+                "type": "integer"
+              },
+              "model": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "available",
+              "indexed",
+              "model"
+            ],
+            "additionalProperties": false
+          },
+          "connections": {
+            "enum": [
+              "shared",
+              "semantic"
+            ]
+          },
           "sites_included": {
             "type": "boolean"
           },
@@ -7360,6 +8139,12 @@
                 ]
               },
               "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "action": {
                 "type": [
                   "string",
                   "null"
@@ -7415,6 +8200,9 @@
           "nodes",
           "edges",
           "sites",
+          "semantic_edges",
+          "semantic",
+          "connections",
           "sites_included",
           "total",
           "page",
@@ -7422,6 +8210,450 @@
           "filters",
           "coverage",
           "meaning"
+        ],
+        "additionalProperties": false
+      },
+      "SimilarSites": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "meaning": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "action": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "country",
+              "action"
+            ],
+            "additionalProperties": false
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "valid",
+                    "invalid",
+                    "unreachable"
+                  ]
+                },
+                "tier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "featured",
+                    "listed",
+                    "unlisted",
+                    "rejected",
+                    null
+                  ]
+                },
+                "authority": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_full_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "last_checked": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "agent_terms": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "automated_access": {
+                          "type": "string",
+                          "enum": [
+                            "welcome",
+                            "limited",
+                            "ask",
+                            "not_allowed"
+                          ]
+                        },
+                        "rate_limit": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "attribution": {
+                          "type": "string",
+                          "enum": [
+                            "required",
+                            "appreciated",
+                            "none"
+                          ]
+                        },
+                        "attribution_text": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "pricing": {
+                          "type": "string",
+                          "enum": [
+                            "free",
+                            "freemium",
+                            "paid"
+                          ]
+                        },
+                        "pricing_url": {
+                          "type": "string"
+                        },
+                        "terms_url": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "ai-ml",
+                      "developer-tools",
+                      "infrastructure",
+                      "data-analytics",
+                      "cybersecurity",
+                      "finance-payments",
+                      "ecommerce",
+                      "productivity",
+                      "marketing",
+                      "education",
+                      "healthcare",
+                      "media",
+                      "design",
+                      "gaming",
+                      "travel",
+                      "community",
+                      "legal",
+                      "recruiting-careers",
+                      "industrial-manufacturing",
+                      "real-estate",
+                      "arts-culture",
+                      "sports-fitness",
+                      "food-dining",
+                      "automotive",
+                      "government-public-services",
+                      "science-research",
+                      "ai-agents-mcp",
+                      "apis-sdks",
+                      "databases",
+                      "auth-identity",
+                      "devops-observability",
+                      "no-code-automation",
+                      "communications",
+                      "crypto-web3",
+                      "saas-business-software",
+                      "open-source",
+                      "documentation-reference",
+                      "fashion-beauty",
+                      "home-garden",
+                      "consumer-electronics",
+                      "pets",
+                      "insurance",
+                      "telecom",
+                      "logistics-shipping",
+                      "energy-utilities",
+                      "construction-architecture",
+                      "agriculture",
+                      "nonprofit",
+                      "events",
+                      "personal-blog",
+                      "entertainment",
+                      "local-business"
+                    ]
+                  },
+                  "maxItems": 8,
+                  "uniqueItems": true,
+                  "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+                },
+                "inferred_tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Topic tags inferred by the AI classifier from the site text."
+                },
+                "audience": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "developers",
+                        "consumers",
+                        "business",
+                        "mixed"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "agent_uses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "read_docs",
+                      "call_api",
+                      "buy",
+                      "book",
+                      "search_content",
+                      "download_data",
+                      "contact_support"
+                    ]
+                  },
+                  "uniqueItems": true
+                },
+                "language": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
+                },
+                "country_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "owner",
+                    "structured_data",
+                    "contact_page",
+                    "tld",
+                    "ip",
+                    "cdn",
+                    null
+                  ],
+                  "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+                },
+                "publisher_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "publisher_country_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "owner",
+                    "structured_data",
+                    "contact_page",
+                    null
+                  ]
+                },
+                "hosting_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "platform_generated": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "agent_summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_txt_cached": {
+                  "type": "string"
+                },
+                "agentic": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "interface",
+                        "transactional",
+                        "documentation",
+                        "informational"
+                      ],
+                      "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "section_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "section_partial": {
+                  "type": "boolean"
+                },
+                "section_indexed_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "mcp"
+                    ]
+                  },
+                  "uniqueItems": true,
+                  "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+                },
+                "similarity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "shared_sections": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "domain",
+                "status",
+                "tier",
+                "authority",
+                "verified",
+                "title",
+                "summary",
+                "llms_txt",
+                "llms_full_txt",
+                "last_checked",
+                "agent_terms",
+                "categories",
+                "inferred_tags",
+                "audience",
+                "agent_uses",
+                "language",
+                "country",
+                "country_source",
+                "publisher_country",
+                "publisher_country_source",
+                "hosting_country",
+                "platform_generated",
+                "agent_summary",
+                "llms_txt_cached",
+                "agentic",
+                "section_keys",
+                "section_partial",
+                "section_indexed_at",
+                "capabilities",
+                "similarity",
+                "shared_sections"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "domain",
+          "title",
+          "available",
+          "model",
+          "meaning",
+          "results"
         ],
         "additionalProperties": false
       },

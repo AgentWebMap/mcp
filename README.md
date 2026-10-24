@@ -2,11 +2,13 @@
 
 <p align="center"><a href="https://agentwebmap.com/browse">Browse and search</a> · <a href="https://agentwebmap.com/explore">Explore sections</a> · <a href="https://agentwebmap.com/stats">Statistics</a> · <a href="https://agentwebmap.com/docs">API &amp; MCP</a> · <a href="https://agentwebmap.com/manage">Manage your listing</a></p>
 
-# Agent Web Map: find the next useful source for your agent
+# Agent Web Map: an llms.txt directory for AI agents
 
 [Agent Web Map](https://agentwebmap.com/) discovers and continuously validates websites publishing [llms.txt](https://agentwebmap.com/what-is-llms-txt). Search for a publisher or task, find original source links with matching evidence and freshness, and explore connections between the sections publishers include in their files.
 
 People use the [website](https://agentwebmap.com/browse). Agents use the same index through the **free JSON API and hosted MCP server**. Public discovery needs no account or API key. Connect your client directly to the hosted service; no local server installation is needed.
+
+**Find a source. Follow a connection. Bring it to your agent.** Look up documentation for a task, discover related publishers, or save useful sources in your own workspace.
 
 This repository is the public introduction and integration reference. The platform's application, crawler and infrastructure are maintained separately.
 
@@ -36,13 +38,17 @@ The service combines task-focused source discovery, explicit freshness and prove
 | Submit a publisher's file for checking | [Submit a site](https://agentwebmap.com/submit) |
 | Verify ownership and manage a listing | [Owner dashboard](https://agentwebmap.com/manage) |
 
-Search combines keyword and meaning-based matches when available, with keyword fallback. Task relevance comes before authority and ownership signals. Filters include categories, publisher-declared MCP capabilities, inferred agentic labels, country and sections extracted from indexed files.
+Search supports words and meaning, with task relevance before authority and ownership signals. Filter by category, publisher-declared MCP capability, kind of site, country, inferred action, or headings extracted from publisher files. [Examples for agents](docs/task-examples.md).
 
-[Filter by country](https://agentwebmap.com/docs#countries) in Browse or the section cloud, or pass `country=FR` / `country=unknown` through REST and MCP. [`GET /v1/countries`](https://agentwebmap.com/v1/countries) and `list_countries` expose available codes and listed-site counts. Country reflects domain or hosting location; it does not establish company headquarters or markets served.
+[Filter by country](https://agentwebmap.com/docs#countries) in Browse or the section cloud, or pass `country=FR` / `country=unknown` through REST and MCP. [`GET /v1/countries`](https://agentwebmap.com/v1/countries) and `list_countries` expose available codes and listed-site counts. Country evidence can come from an owner declaration, a published organization address, a domain suffix or hosting. Responses distinguish the evidence; it does not establish verified headquarters or markets served.
 
 For agent-readable orientation, [llms.txt](https://agentwebmap.com/llms.txt) is the concise service guide. [llms-full.txt](https://agentwebmap.com/llms-full.txt) includes the complete platform/API/MCP reference generated from the same documentation as [docs.md](https://agentwebmap.com/docs.md), plus eligible owner-verified publishers. The guides cover country and section filters, the point cloud, public collections, optional private workspaces and owner management. Private account and admin records are excluded; unverified publishers remain discoverable through the public API.
 
-The section catalogue grows as new files and headings are indexed. The point cloud connects labels shared by publishers; selecting labels reveals matching sites. These relationships come from heading co-occurrence, independently of meaning-based search and AI topic classification. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
+The section catalogue grows as new files and headings are indexed. The interactive viewer opens topic details, matching publishers, filters and color layers when selected. Teal links show shared headings, violet links show inferred similarities in meaning, and optional amber highlights mark emerging headings observed in the index. Meaning connections do not change heading memberships or widen filters. Original headings and partial-coverage information remain available through the API. [Section discovery guide](docs/sections.md).
+
+Start from a website in [Explore](https://agentwebmap.com/explore?publisher=cloudflare.com) to inspect its headings and related publishers. Agents can use [`GET /v1/similar/{domain}`](https://agentwebmap.com/v1/similar/cloudflare.com?limit=6) or MCP `similar_sites`. Related sites are discovery suggestions; similarity does not imply a partnership or equivalent capabilities.
+
+[Public collections](https://agentwebmap.com/collections) offer editorial starting points for [building MCP tools](https://agentwebmap.com/collections/build-mcp), [payments](https://agentwebmap.com/collections/payments), and [AI applications](https://agentwebmap.com/collections/ai-application).
 
 ## A workspace for people
 
@@ -102,13 +108,14 @@ curl --get https://agentwebmap.com/v1/resolve \
 | [`GET /v1/categories`](https://agentwebmap.com/v1/categories) | Discover category IDs, counts and declared capabilities |
 | [`GET /v1/sections`](https://agentwebmap.com/v1/sections) | Discover heading labels, counts and emerging sections |
 | [`GET /v1/section-graph`](https://agentwebmap.com/v1/section-graph) | Explore heading connections and selected publishers |
+| [`GET /v1/similar/cloudflare.com`](https://agentwebmap.com/v1/similar/cloudflare.com) | Find related publishers, with optional country and action filters |
 | [`GET /stats.json`](https://agentwebmap.com/stats.json) | Read current index statistics |
 
 [API reference](https://agentwebmap.com/docs) · [Markdown reference](https://agentwebmap.com/docs.md) · [Live OpenAPI](https://agentwebmap.com/openapi.json) · [Local reference](docs/api.md)
 
 ## MCP tools
 
-The hosted server exposes **20 tools**, checked on 22 October 2026. `tools/list` is the live inventory.
+The hosted server exposes **21 tools**, checked on 24 October 2026. `tools/list` is the live inventory.
 
 | Tool | Purpose |
 |---|---|
@@ -121,6 +128,7 @@ The hosted server exposes **20 tools**, checked on 22 October 2026. `tools/list`
 | `list_countries` | Discover inferred countries and counts; filter list, search, resolve and sections with `country` |
 | `list_sections` | Discover headings, counts, emerging labels and coverage |
 | `explore_sections` | Explore shared headings, connections and matching publishers |
+| `similar_sites` | Find related publishers from a known domain |
 | `directory_stats` | Read directory-wide counts |
 | `check_llms_txt` | Validate a published file and see suggested fixes |
 | `generate_llms_txt` | Generate a draft for an owner to review before publishing |
@@ -147,7 +155,7 @@ Listing health and activity are available in the owner dashboard. Public watches
 
 ## Access and source quality
 
-Public discovery has no automatic daily usage or pagination quotas. Usage is monitored; high activity creates an operator review alert, and the operator can explicitly block a source. Pages hold at most 100 results, and MCP batches at most 10 messages. Owner credentials are separate from optional integration keys. [Access details](https://agentwebmap.com/docs#limits).
+Public discovery needs no account or API key. API pages hold at most 100 results; the website's Browse view defaults to 250 rows. Owner credentials are needed only for protected listing controls. [Current access details](https://agentwebmap.com/docs#limits).
 
 Coverage is incomplete. Matching evidence comes from publisher metadata, link descriptions and headings, rather than the full text of every linked page. Read original sources before relying on implementation details. Use the publisher's search or web search when results are missing, weak or stale. Inferred labels and declared endpoints do not certify an available action. [Categories and capabilities](docs/categories.md) · [Terms for agents](docs/agent-terms.md).
 
@@ -166,3 +174,5 @@ Current figures are on the [statistics page](https://agentwebmap.com/stats). Req
 Feedback: [Issues](https://github.com/AgentWebMap/mcp/issues) or [Discussions](https://github.com/AgentWebMap/mcp/discussions).
 
 The [brand assets](brand/) may be used to link to Agent Web Map. The MIT license covers the materials in this public repository; the hosted platform and directory data are provided separately by agentwebmap.com.
+
+Public feature and interface information reviewed 24 October 2026. Use the live documentation and `tools/list` for the current service contract.
