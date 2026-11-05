@@ -6,7 +6,7 @@ Use categories to narrow documentation discovery by the publisher's subject or b
 
 `GET https://agentwebmap.com/v1/categories` or MCP `list_categories` returns `taxonomy_version`, `categories`, `uncategorized`, and `capabilities`.
 
-Each category has an id, label, description and count. Read the live endpoint for current IDs and counts; categories can evolve as the directory improves.
+Each category has an id, label, description and count. The current taxonomy has 52 categories; rule version 3. Read the endpoint for current IDs.
 
 | ID | Label |
 |---|---|

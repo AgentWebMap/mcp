@@ -52,9 +52,9 @@ Start from a website in [Explore](https://agentwebmap.com/explore?publisher=clou
 
 ## A workspace for people
 
-The full-width, text-file interface offers light and dark modes, source previews, list and grid views, and a persistent sidebar. [Sign in with an email code](https://agentwebmap.com/workspace/signin) to save favorites, organize private collections and return to recently opened sources across browser sessions. Codes expire after ten minutes and work once in the requesting browser. Your source lists are private and separate from the public index. Copy a reference prompt, download sources.md, or connect your agent through MCP or REST.
+The full-width directory interface offers light and dark modes, source previews, list and grid views, and a persistent sidebar. [Sign in with an email code](https://agentwebmap.com/workspace/signin) to save favorites, organize private collections and return to recently opened sources across browser sessions. Codes expire after ten minutes and work once in the requesting browser. Your source lists are private and separate from the public index. Copy a reference prompt, download sources.md, or connect your agent through MCP or REST.
 
-Connect verified websites to see their owner dashboards from the workspace. Email sign-in confirms access to a mailbox; domain ownership still requires a fresh proof or the current owner key. Standalone owner-key sign-in remains available. Public directory, API and MCP access require no account. [Live workspace reference](https://agentwebmap.com/docs#workspace).
+Connect verified websites to see their owner dashboards from the workspace. Email sign-in confirms access to a mailbox; domain ownership still requires a fresh proof or the current owner key. Standalone owner-key sign-in remains available. Basic directory, API and MCP discovery stay anonymous. Free accounts unlock saved reports, named integrations, scoped API keys, generators, website audits, MCP endpoint checks and deeper enumeration. [Live workspace reference](https://agentwebmap.com/docs#workspace).
 
 ## Add it
 
@@ -115,7 +115,7 @@ curl --get https://agentwebmap.com/v1/resolve \
 
 ## MCP tools
 
-The hosted server exposes **21 tools**, checked on 24 October 2026. `tools/list` is the live inventory.
+The hosted server exposes **24 tools**, checked on 5 November 2026. `tools/list` is the live inventory.
 
 | Tool | Purpose |
 |---|---|
@@ -131,6 +131,9 @@ The hosted server exposes **21 tools**, checked on 24 October 2026. `tools/list`
 | `similar_sites` | Find related publishers from a known domain |
 | `directory_stats` | Read directory-wide counts |
 | `check_llms_txt` | Validate a published file and see suggested fixes |
+| `validate_llms_txt` | Check a pasted draft without fetching or retaining it |
+| `audit_website` | Review dated public file, homepage and crawler-rule signals |
+| `check_mcp_endpoint` | Inspect public MCP tool metadata without running tools |
 | `generate_llms_txt` | Generate a draft for an owner to review before publishing |
 | `verification_instructions` | Read ownership methods and how to start a private claim |
 | `register_domain` | Submit a domain for checking |
@@ -151,11 +154,11 @@ Unverified publisher profiles stay available on the website and through REST/MCP
 
 The browser guides you through proof in llms.txt, DNS, a homepage meta tag or a well-known file. API and MCP clients start a fresh claim, publish its proof and complete the check using private claim credentials. No backlink is required. Verification confirms domain control, rather than accuracy or endpoint availability.
 
-Listing health and activity are available in the owner dashboard. Public watches and outbound owner notifications have been retired. [Current owner controls](https://agentwebmap.com/docs#why-verify).
+Verified owners can edit the agent-facing summary in the management dashboard, REST `PATCH /v1/domain/{domain}` or MCP `update_site`, or restore the generated summary. The opening summary/Overview comes from the publisher’s llms.txt and changes through normal crawling. Listing health and activity are available in the owner dashboard. Public watches and outbound owner notifications have been retired. [Current owner controls](https://agentwebmap.com/docs#why-verify).
 
 ## Access and source quality
 
-Public discovery needs no account or API key. API pages hold at most 100 results; the website's Browse view defaults to 250 rows. Owner credentials are needed only for protected listing controls. [Current access details](https://agentwebmap.com/docs#limits).
+Public discovery needs no account or API key. API pages hold at most 100 results; the website's Browse view defaults to 250 rows. Enumeration windows cover 250 anonymous or 1,000 registered results per query. Free registration is required for generator, audit and MCP endpoint tools. MCP OAuth with PKCE and self-service integration keys are supported; domain-owner keys remain separate. [Current access details](https://agentwebmap.com/docs#limits).
 
 Coverage is incomplete. Matching evidence comes from publisher metadata, link descriptions and headings, rather than the full text of every linked page. Read original sources before relying on implementation details. Use the publisher's search or web search when results are missing, weak or stale. Inferred labels and declared endpoints do not certify an available action. [Categories and capabilities](docs/categories.md) · [Terms for agents](docs/agent-terms.md).
 

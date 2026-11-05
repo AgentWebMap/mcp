@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.23.6",
-    "description": "Agent Web Map is the directory of websites publishing llms.txt: found across the web, validated continuously and ranked by authority, with a free JSON API and MCP server so AI agents can look any site up. Public discovery has no automatic daily or pagination quotas. Usage is monitored; only explicit operator source blocks deny discovery access. Optional integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
+    "version": "0.30.4",
+    "description": "Agent Web Map is an llms.txt directory, JSON API and hosted MCP server. AI agents can find publisher documentation by domain or task, inspect source links and file check dates, and explore shared headings. Basic discovery is free without an account or key. Basic discovery stays anonymous. Enumeration windows cover 250 anonymous or 1,000 registered results per query; bulk needs separate approval. Generator, audits and MCP checks require free registration. Daily counters remain observations. Integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
     }
@@ -455,7 +455,7 @@
       "get": {
         "operationId": "similarSites",
         "summary": "Related publishers by vector similarity",
-        "description": "Find related publishers and actual shared section keys. Similarity does not establish affiliation or capabilities. Unavailable similarity information returns available=false and a reason.",
+        "description": "Stored publisher metadata vectors, with actual shared section keys. Similarity does not establish affiliation or capabilities. Unavailable or stale embeddings return available=false and a reason.",
         "parameters": [
           {
             "name": "domain",
@@ -605,7 +605,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "Page number. Public discovery has no automatic result-window quota."
+            "description": "Page number. Anonymous enumeration covers 250 results per query; registered keys cover 1,000."
           },
           {
             "name": "per_page",
@@ -711,6 +711,127 @@
         }
       }
     },
+    "/v1/sections/history": {
+      "get": {
+        "operationId": "sectionHistory",
+        "summary": "Recorded daily changes for up to 12 known heading keys",
+        "description": "Eight UTC date buckets including the partial current day. Counts cover the whole index. Missing rows are unknown rather than measured zero. Index changes do not establish market adoption.",
+        "parameters": [
+          {
+            "name": "keys",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 1451
+            },
+            "description": "One to twelve comma-separated normalized keys from the heading catalogue."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bounded daily history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scope": {
+                      "type": "string",
+                      "enum": [
+                        "whole_index"
+                      ]
+                    },
+                    "from_date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "through_date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "latest_day_partial": {
+                      "type": "boolean"
+                    },
+                    "keys": {
+                      "type": "array",
+                      "maxItems": 12,
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "maxItems": 96,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "day": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "added": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "removed": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/section-graph": {
       "get": {
         "operationId": "exploreSections",
@@ -725,7 +846,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "Page number. Public discovery has no automatic result-window quota."
+            "description": "Page number. Anonymous enumeration covers 250 results per query; registered keys cover 1,000."
           },
           {
             "name": "per_page",
@@ -885,7 +1006,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "Page number. Public discovery has no automatic result-window quota."
+            "description": "Page number. Anonymous enumeration covers 250 results per query; registered keys cover 1,000."
           },
           {
             "name": "per_page",
@@ -1180,7 +1301,7 @@
               "minimum": 1,
               "default": 1
             },
-            "description": "Page number. Public discovery has no automatic result-window quota."
+            "description": "Page number. Anonymous enumeration covers 250 results per query; registered keys cover 1,000."
           },
           {
             "name": "per_page",
@@ -2227,10 +2348,232 @@
         }
       }
     },
+    "/v1/validate": {
+      "post": {
+        "operationId": "validateLlmsDraft",
+        "summary": "Check pasted llms.txt text in memory without fetching or storing it",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "maxLength": 524288
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftValidation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/audit/{domain}": {
+      "get": {
+        "operationId": "auditWebsite",
+        "summary": "Dated public homepage, llms.txt, crawler rules and interface hints; free registered tool",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "description": "Domain name, e.g. example.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebsiteAudit"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp-check": {
+      "post": {
+        "operationId": "checkMcpEndpoint",
+        "summary": "Registered tool: inspect public MCP metadata without executing tools; 20 checks per account/network per 10 minutes",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "endpoint"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpCheck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/generate/{domain}": {
       "get": {
         "operationId": "generateLlmsTxt",
-        "summary": "Draft llms.txt from homepage, sitemap and page titles (10-30 s)",
+        "summary": "Registered tool: draft llms.txt from homepage, sitemap and page titles (10-30 s)",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
         "parameters": [
           {
             "name": "domain",
@@ -2257,6 +2600,26 @@
           },
           "400": {
             "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
             "content": {
               "application/json": {
                 "schema": {
@@ -2359,7 +2722,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-AgentWebMap-Key",
-        "description": "Optional operator-issued integration identity, awm_client_…. Public discovery needs no key and has no automatic usage quotas. Owner keys are separate."
+        "description": "Self-service scoped integration key, awm_client_…. Required for generator, audits and MCP checks, and deeper enumeration; basic discovery stays anonymous. Owner keys are separate."
       }
     },
     "schemas": {
@@ -2703,6 +3066,18 @@
               "string",
               "null"
             ]
+          },
+          "agent_summary_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "verified_owner",
+              "ai",
+              null
+            ],
+            "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
           },
           "llms_txt_cached": {
             "type": "string"
@@ -3433,6 +3808,18 @@
               "null"
             ]
           },
+          "agent_summary_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "verified_owner",
+              "ai",
+              null
+            ],
+            "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
+          },
           "llms_txt_cached": {
             "type": "string"
           },
@@ -3804,6 +4191,18 @@
                     "string",
                     "null"
                   ]
+                },
+                "agent_summary_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "verified_owner",
+                    "ai",
+                    null
+                  ],
+                  "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
                 },
                 "llms_txt_cached": {
                   "type": "string"
@@ -4556,6 +4955,18 @@
                   "string",
                   "null"
                 ]
+              },
+              "agent_summary_source": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "verified_owner",
+                  "ai",
+                  null
+                ],
+                "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
               },
               "llms_txt_cached": {
                 "type": "string"
@@ -5816,6 +6227,12 @@
               "string",
               "null"
             ]
+          },
+          "statistics_updated_at": {
+            "type": "string"
+          },
+          "statistics_stale": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -6150,6 +6567,14 @@
       "SiteUpdate": {
         "type": "object",
         "properties": {
+          "agent_summary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300,
+            "description": "Verified-owner plain-text override. Preserved through recrawls; null restores the generated version."
+          },
           "description": {
             "type": [
               "string",
@@ -6537,6 +6962,18 @@
               "string",
               "null"
             ]
+          },
+          "agent_summary_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "verified_owner",
+              "ai",
+              null
+            ],
+            "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
           },
           "llms_txt_cached": {
             "type": "string"
@@ -7458,6 +7895,189 @@
               "string",
               "null"
             ]
+          },
+          "validation": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "const": true
+              },
+              "valid": {
+                "type": "boolean"
+              },
+              "verdict": {
+                "enum": [
+                  "valid",
+                  "needs work"
+                ]
+              },
+              "checked_at": {
+                "type": "string"
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bytes": {
+                "type": "integer"
+              },
+              "parsed": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "summary": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "sectionCount": {
+                    "type": "integer"
+                  },
+                  "linkCount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "title",
+                  "summary",
+                  "sectionCount",
+                  "linkCount"
+                ],
+                "additionalProperties": false
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "optional": {
+                      "type": "boolean"
+                    },
+                    "severity": {
+                      "enum": [
+                        "pass",
+                        "error",
+                        "warning",
+                        "info"
+                      ]
+                    },
+                    "fix": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "ok",
+                    "label",
+                    "detail",
+                    "required",
+                    "optional",
+                    "severity",
+                    "fix"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "score": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              },
+              "recommendations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string"
+                    },
+                    "fix": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "severity",
+                    "fix"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "meaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ok",
+              "valid",
+              "verdict",
+              "checked_at",
+              "url",
+              "bytes",
+              "parsed",
+              "checks",
+              "score",
+              "max",
+              "recommendations",
+              "meaning"
+            ],
+            "additionalProperties": false
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string"
+                },
+                "fix": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "severity",
+                "fix"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "meaning": {
+            "type": "string"
           }
         },
         "required": [
@@ -7501,6 +8121,241 @@
           },
           "text": {
             "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "llms_full_txt_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "validation": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "const": true
+              },
+              "valid": {
+                "type": "boolean"
+              },
+              "verdict": {
+                "enum": [
+                  "valid",
+                  "needs work"
+                ]
+              },
+              "checked_at": {
+                "type": "string"
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bytes": {
+                "type": "integer"
+              },
+              "parsed": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "summary": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "sectionCount": {
+                    "type": "integer"
+                  },
+                  "linkCount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "title",
+                  "summary",
+                  "sectionCount",
+                  "linkCount"
+                ],
+                "additionalProperties": false
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "optional": {
+                      "type": "boolean"
+                    },
+                    "severity": {
+                      "enum": [
+                        "pass",
+                        "error",
+                        "warning",
+                        "info"
+                      ]
+                    },
+                    "fix": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "ok",
+                    "label",
+                    "detail",
+                    "required",
+                    "optional",
+                    "severity",
+                    "fix"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "score": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              },
+              "recommendations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string"
+                    },
+                    "fix": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "severity",
+                    "fix"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "meaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ok",
+              "valid",
+              "verdict",
+              "checked_at",
+              "url",
+              "bytes",
+              "parsed",
+              "checks",
+              "score",
+              "max",
+              "recommendations",
+              "meaning"
+            ],
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "url",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "crawl": {
+            "type": "object",
+            "properties": {
+              "page_limit": {
+                "type": "integer"
+              },
+              "request_limit": {
+                "type": "integer"
+              },
+              "requests": {
+                "type": "integer"
+              },
+              "pages_attempted": {
+                "type": "integer"
+              },
+              "robots_skipped": {
+                "type": "integer"
+              },
+              "duplicates_skipped": {
+                "type": "integer"
+              },
+              "failed_pages": {
+                "type": "integer"
+              },
+              "noindex_skipped": {
+                "type": "integer"
+              },
+              "partial": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "page_limit",
+              "request_limit",
+              "requests",
+              "pages_attempted",
+              "robots_skipped",
+              "duplicates_skipped",
+              "failed_pages",
+              "noindex_skipped",
+              "partial"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -7512,6 +8367,484 @@
           "source",
           "sampled",
           "text"
+        ],
+        "additionalProperties": false
+      },
+      "DraftValidation": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "const": true
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "verdict": {
+            "enum": [
+              "valid",
+              "needs work"
+            ]
+          },
+          "checked_at": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "parsed": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "sectionCount": {
+                "type": "integer"
+              },
+              "linkCount": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "title",
+              "summary",
+              "sectionCount",
+              "linkCount"
+            ],
+            "additionalProperties": false
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "optional": {
+                  "type": "boolean"
+                },
+                "severity": {
+                  "enum": [
+                    "pass",
+                    "error",
+                    "warning",
+                    "info"
+                  ]
+                },
+                "fix": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "code",
+                "ok",
+                "label",
+                "detail",
+                "required",
+                "optional",
+                "severity",
+                "fix"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "score": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string"
+                },
+                "fix": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "severity",
+                "fix"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "meaning": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "valid",
+          "verdict",
+          "checked_at",
+          "url",
+          "bytes",
+          "parsed",
+          "checks",
+          "score",
+          "max",
+          "recommendations",
+          "meaning"
+        ],
+        "additionalProperties": false
+      },
+      "WebsiteAudit": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "const": true
+          },
+          "domain": {
+            "type": "string"
+          },
+          "checked_at": {
+            "type": "string"
+          },
+          "homepage": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "http_status": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "same_publisher": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "url",
+              "http_status",
+              "same_publisher"
+            ],
+            "additionalProperties": false
+          },
+          "llms_txt": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "verdict": {
+                    "type": "string"
+                  },
+                  "checked_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "recommendations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "severity": {
+                          "type": "string"
+                        },
+                        "fix": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "fix"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "url",
+                  "verdict",
+                  "checked_at",
+                  "recommendations"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "robots": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "http_status": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "observed": {
+                "type": "boolean"
+              },
+              "agents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "agent": {
+                      "type": "string"
+                    },
+                    "purpose": {
+                      "type": "string"
+                    },
+                    "home": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "llms_txt": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "agent",
+                    "purpose",
+                    "home",
+                    "llms_txt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "url",
+              "http_status",
+              "observed",
+              "agents"
+            ],
+            "additionalProperties": false
+          },
+          "mcp_links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "webmcp": {
+            "type": "object",
+            "properties": {
+              "static_hint": {
+                "type": "boolean"
+              },
+              "browser_confirmed": {
+                "const": false
+              }
+            },
+            "required": [
+              "static_hint",
+              "browser_confirmed"
+            ],
+            "additionalProperties": false
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "status",
+                "title",
+                "detail",
+                "action"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "meaning": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "domain",
+          "checked_at",
+          "homepage",
+          "llms_txt",
+          "robots",
+          "mcp_links",
+          "webmcp",
+          "findings",
+          "meaning"
+        ],
+        "additionalProperties": false
+      },
+      "McpCheck": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "const": true
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "checked_at": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "not_confirmed",
+              "authentication_required",
+              "access_restricted",
+              "redirect_not_followed",
+              "tools_observed",
+              "unreachable"
+            ]
+          },
+          "http_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "protocol_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "input_schema_present": {
+                  "type": "boolean"
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "read_only_hint": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "input_schema_present",
+                "issues",
+                "read_only_hint"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "tools_observed": {
+            "type": "integer"
+          },
+          "partial": {
+            "type": "boolean"
+          },
+          "meaning": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "inventory": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "endpoint",
+          "checked_at",
+          "status",
+          "http_status",
+          "protocol_version",
+          "tools",
+          "tools_observed",
+          "partial",
+          "meaning"
         ],
         "additionalProperties": false
       },
@@ -7658,6 +8991,12 @@
           "uncategorized": {
             "type": "integer",
             "minimum": 0
+          },
+          "statistics_updated_at": {
+            "type": "string"
+          },
+          "statistics_stale": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -7760,6 +9099,12 @@
           },
           "meaning": {
             "type": "string"
+          },
+          "statistics_updated_at": {
+            "type": "string"
+          },
+          "statistics_stale": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -7909,6 +9254,12 @@
                   "string",
                   "null"
                 ]
+              },
+              "statistics_updated_at": {
+                "type": "string"
+              },
+              "statistics_stale": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -8180,6 +9531,12 @@
                   "string",
                   "null"
                 ]
+              },
+              "statistics_updated_at": {
+                "type": "string"
+              },
+              "statistics_stale": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -8194,6 +9551,12 @@
           },
           "meaning": {
             "type": "string"
+          },
+          "statistics_updated_at": {
+            "type": "string"
+          },
+          "statistics_stale": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -8552,6 +9915,18 @@
                     "null"
                   ]
                 },
+                "agent_summary_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "verified_owner",
+                    "ai",
+                    null
+                  ],
+                  "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
+                },
                 "llms_txt_cached": {
                   "type": "string"
                 },
@@ -8634,6 +10009,7 @@
                 "hosting_country",
                 "platform_generated",
                 "agent_summary",
+                "agent_summary_source",
                 "llms_txt_cached",
                 "agentic",
                 "section_keys",
