@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.30.7",
+    "version": "0.31.7",
     "description": "Agent Web Map is an llms.txt directory, JSON API and hosted MCP server. AI agents can find publisher documentation by domain or task, inspect source links and file check dates, and explore shared headings. Basic discovery is free without an account or key. Basic discovery stays anonymous. Enumeration windows cover 250 anonymous or 1,000 registered results per query; bulk needs separate approval. Generator, audits and MCP checks require free registration. Daily counters remain observations. Integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
@@ -197,7 +197,7 @@
       "get": {
         "operationId": "resolve",
         "summary": "Find publisher documentation for a domain or development task",
-        "description": "Inspect match strength and health before using sources. Excerpts are publisher link metadata, not fetched page contents. Weak matches are fallback candidates; no matches return best=null. Live refresh validates without changing the directory.",
+        "description": "Inspect match strength and health before using sources. Excerpts are publisher link metadata, not fetched page contents. Weak matches are fallback candidates; no matches return best=null. All reads use stored data; refresh=true is rejected. Registered live tools are separate and never call paid AI.",
         "parameters": [
           {
             "name": "q",
@@ -356,7 +356,7 @@
               "type": "boolean",
               "default": false
             },
-            "description": "Validate the selected source live. Probes are cached/coalesced for 60 seconds per domain."
+            "description": "Deprecated. true returns stored_data_only. Use a registered live checker instead."
           },
           {
             "name": "limit",
@@ -963,6 +963,200 @@
           },
           "429": {
             "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/search/preview": {
+      "get": {
+        "operationId": "searchIndexPreview",
+        "summary": "Bounded non-exhaustive stored keyword preview without corpus totals or paid providers",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 10
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ai-ml",
+                "developer-tools",
+                "infrastructure",
+                "data-analytics",
+                "cybersecurity",
+                "finance-payments",
+                "ecommerce",
+                "productivity",
+                "marketing",
+                "education",
+                "healthcare",
+                "media",
+                "design",
+                "gaming",
+                "travel",
+                "community",
+                "legal",
+                "recruiting-careers",
+                "industrial-manufacturing",
+                "real-estate",
+                "arts-culture",
+                "sports-fitness",
+                "food-dining",
+                "automotive",
+                "government-public-services",
+                "science-research",
+                "ai-agents-mcp",
+                "apis-sdks",
+                "databases",
+                "auth-identity",
+                "devops-observability",
+                "no-code-automation",
+                "communications",
+                "crypto-web3",
+                "saas-business-software",
+                "open-source",
+                "documentation-reference",
+                "fashion-beauty",
+                "home-garden",
+                "consumer-electronics",
+                "pets",
+                "insurance",
+                "telecom",
+                "logistics-shipping",
+                "energy-utilities",
+                "construction-architecture",
+                "agriculture",
+                "nonprofit",
+                "events",
+                "personal-blog",
+                "entertainment",
+                "local-business"
+              ]
+            },
+            "description": "Topic ID from GET /v1/categories. Classification uses publisher metadata; unclassified sites have categories=[]."
+          },
+          {
+            "name": "capability",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mcp"
+              ]
+            },
+            "description": "Publisher-declared MCP endpoint. This declaration does not prove endpoint availability or protocol compatibility."
+          },
+          {
+            "name": "agentic",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "interface",
+                "transactional",
+                "documentation",
+                "informational"
+              ]
+            },
+            "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z]{2}|[Uu][Nn][Kk][Nn][Oo][Ww][Nn])$",
+              "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+            },
+            "description": "Country: owner-declared or site-published address preferred; domain/hosting inference is a labeled fallback. ISO 3166-1 alpha-2 (XK supported), case-insensitive, or unknown. GET /v1/countries / list_countries lists counts. Not verified headquarters or markets served."
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "read_docs",
+                "search_content",
+                "call_api",
+                "buy",
+                "book",
+                "download_data",
+                "contact_support"
+              ],
+              "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+            },
+            "description": "Actions are inferred from publisher content. They can overlap and do not prove a working integration, authorization or task success. Unclassified sites may be missing useful actions."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid arguments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Capacity reached",
             "content": {
               "application/json": {
                 "schema": {
@@ -1693,6 +1887,11 @@
     "/v1/sites": {
       "post": {
         "operationId": "registerSite",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
         "summary": "Submit a public domain or request an update; same-domain requests coalesce with a ten-minute cooldown",
         "requestBody": {
           "required": true,
@@ -1813,6 +2012,11 @@
     "/v1/sites/{domain}/claims": {
       "post": {
         "operationId": "beginOwnershipClaim",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
         "summary": "Start a fresh 30-minute ownership claim; keep the private secret and publish only its proof token",
         "parameters": [
           {
@@ -1894,6 +2098,11 @@
     "/v1/sites/{domain}/verify": {
       "post": {
         "operationId": "verifySite",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
         "summary": "Consume a fresh requester-bound proof challenge and issue an owner key once",
         "parameters": [
           {
@@ -2203,10 +2412,11 @@
     "/v1/sites/{domain}/recrawl": {
       "post": {
         "operationId": "recrawlSite",
-        "summary": "Owner: revalidate and update the directory (once per 10 minutes)",
+        "summary": "Registered owner: revalidate and update the directory (once per 10 minutes); owner key plus signed-in account or integration credential required",
         "security": [
           {
-            "apiKey": []
+            "apiKey": [],
+            "discoveryClient": []
           }
         ],
         "parameters": [
@@ -2300,7 +2510,12 @@
     "/v1/check/{domain}": {
       "get": {
         "operationId": "checkLlmsTxt",
-        "summary": "Validate llms.txt and report checks, health and preview",
+        "security": [
+          {
+            "discoveryClient": []
+          }
+        ],
+        "summary": "Registered live tool: validate llms.txt without paid AI",
         "parameters": [
           {
             "name": "domain",
@@ -2726,6 +2941,413 @@
       }
     },
     "schemas": {
+      "SearchPreview": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "valid",
+                    "invalid",
+                    "unreachable"
+                  ]
+                },
+                "tier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "featured",
+                    "listed",
+                    "unlisted",
+                    "rejected",
+                    null
+                  ]
+                },
+                "authority": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "llms_full_txt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "last_checked": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "agent_terms": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "automated_access": {
+                          "type": "string",
+                          "enum": [
+                            "welcome",
+                            "limited",
+                            "ask",
+                            "not_allowed"
+                          ]
+                        },
+                        "rate_limit": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "attribution": {
+                          "type": "string",
+                          "enum": [
+                            "required",
+                            "appreciated",
+                            "none"
+                          ]
+                        },
+                        "attribution_text": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "pricing": {
+                          "type": "string",
+                          "enum": [
+                            "free",
+                            "freemium",
+                            "paid"
+                          ]
+                        },
+                        "pricing_url": {
+                          "type": "string"
+                        },
+                        "terms_url": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "ai-ml",
+                      "developer-tools",
+                      "infrastructure",
+                      "data-analytics",
+                      "cybersecurity",
+                      "finance-payments",
+                      "ecommerce",
+                      "productivity",
+                      "marketing",
+                      "education",
+                      "healthcare",
+                      "media",
+                      "design",
+                      "gaming",
+                      "travel",
+                      "community",
+                      "legal",
+                      "recruiting-careers",
+                      "industrial-manufacturing",
+                      "real-estate",
+                      "arts-culture",
+                      "sports-fitness",
+                      "food-dining",
+                      "automotive",
+                      "government-public-services",
+                      "science-research",
+                      "ai-agents-mcp",
+                      "apis-sdks",
+                      "databases",
+                      "auth-identity",
+                      "devops-observability",
+                      "no-code-automation",
+                      "communications",
+                      "crypto-web3",
+                      "saas-business-software",
+                      "open-source",
+                      "documentation-reference",
+                      "fashion-beauty",
+                      "home-garden",
+                      "consumer-electronics",
+                      "pets",
+                      "insurance",
+                      "telecom",
+                      "logistics-shipping",
+                      "energy-utilities",
+                      "construction-architecture",
+                      "agriculture",
+                      "nonprofit",
+                      "events",
+                      "personal-blog",
+                      "entertainment",
+                      "local-business"
+                    ]
+                  },
+                  "maxItems": 8,
+                  "uniqueItems": true,
+                  "description": "Inferred topic IDs from publisher metadata; empty means unclassified."
+                },
+                "inferred_tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Topic tags inferred by the AI classifier from the site text."
+                },
+                "audience": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "developers",
+                        "consumers",
+                        "business",
+                        "mixed"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "agent_uses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "read_docs",
+                      "call_api",
+                      "buy",
+                      "book",
+                      "search_content",
+                      "download_data",
+                      "contact_support"
+                    ]
+                  },
+                  "uniqueItems": true
+                },
+                "language": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Published or declared address country preferred; domain/hosting fallback. Null when unknown. Not independently verified headquarters or markets served."
+                },
+                "country_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "owner",
+                    "structured_data",
+                    "contact_page",
+                    "tld",
+                    "ip",
+                    "cdn",
+                    null
+                  ],
+                  "description": "owner: owner-declared address; structured_data/contact_page: site-published address; tld: domain inference; ip: non-CDN hosting inference; cdn: location withheld. No source independently verifies headquarters."
+                },
+                "publisher_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "publisher_country_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "owner",
+                    "structured_data",
+                    "contact_page",
+                    null
+                  ]
+                },
+                "hosting_country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "platform_generated": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "agent_summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "agent_summary_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "verified_owner",
+                    "ai",
+                    null
+                  ],
+                  "description": "Provenance of the effective agent_summary. Domain ownership does not independently validate the description."
+                },
+                "llms_txt_cached": {
+                  "type": "string"
+                },
+                "agentic": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "interface",
+                        "transactional",
+                        "documentation",
+                        "informational"
+                      ],
+                      "description": "What an agent can do with the site: interface (API or MCP endpoint to call), transactional (buy or book), documentation (docs to read), informational (for people)."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "section_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "section_partial": {
+                  "type": "boolean"
+                },
+                "section_indexed_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "mcp"
+                    ]
+                  },
+                  "uniqueItems": true,
+                  "description": "Publisher-declared capabilities. An MCP declaration does not prove availability or protocol compatibility."
+                }
+              },
+              "required": [
+                "domain",
+                "status",
+                "tier",
+                "authority",
+                "verified",
+                "title",
+                "summary",
+                "llms_txt",
+                "llms_full_txt",
+                "last_checked",
+                "agent_terms",
+                "categories",
+                "capabilities"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "candidate_pool_full": {
+            "type": "boolean"
+          },
+          "exhaustive": {
+            "const": false
+          },
+          "selection": {
+            "const": "stored_keyword_preview"
+          },
+          "as_of": {
+            "type": "string"
+          },
+          "full_search_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "results",
+          "has_more",
+          "candidate_pool_full",
+          "exhaustive",
+          "selection",
+          "as_of",
+          "full_search_url"
+        ],
+        "additionalProperties": false
+      },
       "AgentTerms": {
         "type": "object",
         "properties": {

@@ -115,12 +115,13 @@ curl --get https://agentwebmap.com/v1/resolve \
 
 ## MCP tools
 
-The hosted server exposes **24 tools**, checked on 5 November 2026. `tools/list` is the live inventory.
+The hosted server exposes **25 tools**, checked on 10 November 2026. `tools/list` is the live inventory.
 
 | Tool | Purpose |
 |---|---|
 | `resolve` | Find documentation URLs, evidence, freshness, terms and alternatives |
 | `search_llms_registry` | Search publishers and indexed documentation metadata |
+| `search_index_preview` | Return a small keyword preview without exhaustive counts or documentation hydration |
 | `list_domains` | Browse and filter ranked listings |
 | `lookup_domain` | Read a publisher's listing and file URLs |
 | `read_llms_txt` | Read a cached file with source URL, check date and hash |
@@ -158,7 +159,7 @@ Verified owners can edit the agent-facing summary in the management dashboard, R
 
 ## Access and source quality
 
-Public discovery needs no account or API key. API pages hold at most 100 results; the website's Browse view defaults to 250 rows. Enumeration windows cover 250 anonymous or 1,000 registered results per query. Free registration is required for generator, audit and MCP endpoint tools. MCP OAuth with PKCE and self-service integration keys are supported; domain-owner keys remain separate. [Current access details](https://agentwebmap.com/docs#limits).
+Public discovery needs no account or API key and reads stored data only. It never fetches publisher websites or invokes paid AI. API pages hold at most 100 results; the website's Browse view defaults to 250 rows. Enumeration windows cover 250 anonymous or 1,000 registered results per query. Live website checks, generation, audits and MCP endpoint checks require free registration; paid-provider calls remain prohibited for registered clients too. MCP OAuth with PKCE and self-service integration keys are supported; domain-owner keys remain separate. [Current access details](https://agentwebmap.com/docs#limits).
 
 Coverage is incomplete. Matching evidence comes from publisher metadata, link descriptions and headings, rather than the full text of every linked page. Read original sources before relying on implementation details. Use the publisher's search or web search when results are missing, weak or stale. Inferred labels and declared endpoints do not certify an available action. [Categories and capabilities](docs/categories.md) · [Terms for agents](docs/agent-terms.md).
 
@@ -178,4 +179,4 @@ Feedback: [Issues](https://github.com/AgentWebMap/mcp/issues) or [Discussions](h
 
 The [brand assets](brand/) may be used to link to Agent Web Map. The MIT license covers the materials in this public repository; the hosted platform and directory data are provided separately by agentwebmap.com.
 
-Public feature and interface information reviewed 24 October 2026. Use the live documentation and `tools/list` for the current service contract.
+Public feature and interface information reviewed 10 November 2026. Use the live documentation and `tools/list` for the current service contract.

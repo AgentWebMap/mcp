@@ -42,19 +42,19 @@ Start with a publisher and a task, or an exact domain. Public reads need no API 
 curl 'https://agentwebmap.com/v1/resolve?q=modelcontextprotocol%20authorization&limit=3'
 ```
 
-Read `best`, `sources`, `match.strength` and `health.stale`, then fetch the linked publisher pages. Source excerpts come from publisher link titles, descriptions and headings; they are not the full text of those pages. Weak matches need a more specific query or broader search. When available, Voyage reranks a bounded shortlist of documentation targets against the task. This changes order, not match-strength thresholds or factual validation. Provider failures and enhancement budget exhaustion fall back to the existing ranking.
+Read `best`, `sources`, `match.strength` and `health.stale`, then fetch the linked publisher pages. Source excerpts come from publisher link titles, descriptions and headings; they are not the full text of those pages. Weak matches need a more specific query or broader search. Task lookup uses stored keyword and documentation evidence. It performs no paid query embedding or reranking.
 
 Resolve preserves a named publisher's scope, including curated product and renamed-documentation aliases. It returns `404 no_match` with `best: null` when that publisher has no usable source or no candidate passes the relevance threshold. It does not substitute an unrelated publisher. An invalid exact-domain record can resolve to a valid sibling or known replacement; otherwise it returns no match. Use `GET /v1/domain/{domain}` to inspect an unavailable listing's historical status.
 
 `strong` requires task evidence in the page's title or path as well as supporting metadata and publisher fit. It is a retrieval label, not a correctness probability, endorsement or proof of a working API. Ownership verification does not strengthen a task match. A library named alongside a framework keeps its own publisher scope. Established abbreviations such as RLS are expanded for matching. Equivalent documentation versions share a source slot. A task's documentation sources use a consistent edition even when paths moved between releases: current documentation or the latest indexed stable edition is preferred, unless the query requests a version or comparison. API version resource paths remain distinct.
 
-Returned sources must support the task's distinguishing terms; a shared word such as verification alone is insufficient for a webhook task. Reference documentation precedes equally relevant skill artifacts unless a skill is requested. These rules also apply when optional reranking is unavailable. The resolver can return fewer than `limit` sources when additional links lack task evidence.
+Returned sources must support the task's distinguishing terms; a shared word such as verification alone is insufficient for a webhook task. Reference documentation precedes equally relevant skill artifacts unless a skill is requested. Ranking uses stored metadata and local rules; no paid reranking is performed. The resolver can return fewer than `limit` sources when additional links lack task evidence.
 
-Explicit router names in `q`, such as App Router or Pages Router, constrain candidates before ranking. Shared documentation remains eligible, but pages explicitly belonging to the opposite router are excluded. Relevant reference pages take priority over KB guides, blogs and changelogs unless those publication types are requested. Advertised reference indexes are consulted when the stored sample lacks a direct reference page; newly found task pages are retained even when the stored sample is full.
+Explicit router names in `q`, such as App Router or Pages Router, constrain candidates before ranking. Shared documentation remains eligible, but pages explicitly belonging to the opposite router are excluded. Relevant reference pages take priority over KB guides, blogs and changelogs unless those publication types are requested. Only already-indexed reference links participate; a read does not fetch navigation files.
 
 Next.js renamed Middleware to Proxy in v16 ([publisher reference](https://nextjs.org/docs/app/api-reference/file-conventions/proxy)). An unversioned Next.js middleware task uses current Proxy documentation and explains the rename in `match.reason`. Explicit pre-v16 requests retain Middleware documentation; Edge-runtime requests are not rewritten. If an unversioned task returns only one numbered historical edition, that edition is named in `match.reason`. A publisher-specific rename never changes another library's middleware request.
 
-When the stored sample misses a task, the resolver may inspect up to four publisher-advertised Markdown navigation files within a short time and byte budget (2 MiB total; explicit index files up to 1 MiB each). These files are cached briefly and sampled with the task in mind; destination-page contents are not included in excerpts. Repeated resolutions may reuse a worker-local result for up to 20 seconds. Freshness age and request activity are still calculated per request; explicit live refresh bypasses this cache.
+Resolver, search, lookup, explorer and cached-file reads use stored data only. They never call paid AI, fetch publisher pages or enqueue paid enrichment. A missing cached file returns `cached_file_unavailable`; existing copies keep their original timestamps. Repeated resolutions may reuse a worker-local result for 20 seconds. Bounded live scraping requires a free account, integration credential or MCP OAuth; paid AI is prohibited for registered clients too.
 
 | Parameter | Meaning |
 | --- | --- |
@@ -62,18 +62,18 @@ When the stored sample misses a task, the resolver may inspect up to four publis
 | `detail` | `compact` (default) or `full`, which adds owner/profile details |
 | `limit` | 1–5 documentation targets; default 3 |
 | `max_age` | Acceptable check age in seconds; 0–2592000, default 86400 |
-| `refresh` | `true` performs a bounded live llms.txt check for this response |
+| `refresh` | Deprecated: `true` returns `stored_data_only`. Use the registered checker for live validation. |
 | `category`, `capability`, `agentic`, `country`, `action` | Optional filters, combined with AND |
 
 `health.stale` marks old root-file checks without hiding valid sources. The default remains 24 hours. A separate maintenance worker revisits listed publishers oldest first, starting after 23 hours. Only a fully received, unchanged, valid root file renews that check date; changes and failures queue a complete crawl. This is bounded maintenance, not a guarantee that every file is less than a day old. Documentation, optional full files and ownership proof have separate crawl dates and checks.
 
-`health.documentation_indexed_at` is the stored documentation-index date; individual `sources[].checked_at` values describe the file containing each excerpt and may be newer after navigation. A stale selected publisher can have `health.recheck_queued: true`: a separate worker will check it, subject to a bounded daily workload. This neither blocks the request nor promises immediate freshness. A live refresh checks llms.txt, not every linked page, and does not update the stored index. Missing owner terms mean unknown. A topic with no match returns `404`, `error: "no_match"` and `best: null`; discovery does not require registering the missing site.
+`health.documentation_indexed_at` is the stored documentation-index date; individual `sources[].checked_at` values describe the file containing each excerpt and retain their original stored timestamps. Stale reads never enqueue a refresh. Missing owner terms mean unknown. A topic with no match returns `404`, `error: "no_match"` and `best: null`; discovery does not require registering the missing site.
 
 <a id="search"></a>
 
 ## Search and browse
 
-Use [Browse](https://agentwebmap.com/browse) or the same search through REST and MCP. Search combines keyword matches with meaning-based matches when available, removes duplicates and ranks relevance before verification and authority. Broad keyword queries rerank a bounded set selected by publisher metadata; remaining matches stay available through pagination. More specific task words help narrow broad searches. If semantic search is unavailable, keyword search still works. Listings without a query use verified-first authority ordering.
+Use [Browse](https://agentwebmap.com/browse) or the same search through REST and MCP. Search uses stored keywords and indexed documentation evidence, ranking relevance before verification and authority. It performs no paid query embeddings or reranking. More specific task words help narrow broad searches. Stored vectors still support similar publishers and semantic heading connections. Listings without a query use verified-first authority ordering. For a small, faster result set, use GET /v1/search/preview?q=…&limit=10 or MCP search_index_preview. This examines at most 500 keyword candidates and returns at most 20 current records, with exhaustive:false and a full_search_url; it does not compute complete totals or hydrate documentation.
 
 ```sh
 curl 'https://agentwebmap.com/v1/search?q=event%20delivery%20retries&per_page=10'
@@ -226,7 +226,7 @@ Read our validated copy of a publisher’s llms.txt without another request to t
 curl -i 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io/llms.txt'
 ```
 
-The response is `text/plain`, with `X-Source-URL`, `X-Checked-At`, `X-Content-Hash` and `X-Truncated` headers. A size-limited copy is marked as truncated. The MCP tool `read_llms_txt` returns the content inline with the same metadata. Files not yet cached are fetched on demand with bounded work per call. Invalid files return `409`; unavailable copies return an error rather than an invented file.
+The response is `text/plain`, with `X-Source-URL`, `X-Checked-At`, `X-Content-Hash` and `X-Truncated` headers. A size-limited copy is marked as truncated. The MCP tool `read_llms_txt` returns the content inline with the same metadata. Files not yet cached return cached_file_unavailable; reads never fetch a missing copy. Invalid files return `409`; unavailable copies return an error rather than an invented file.
 
 [Our llms.txt](https://agentwebmap.com/llms.txt) is a concise service guide with discovery, country filters, publisher sections, public collections, private workspaces and owner tools. [Our llms-full.txt](https://agentwebmap.com/llms-full.txt) includes this complete platform/API/MCP reference, generated from the same documentation sections, followed by eligible valid, listed, unblocked sites whose owners have verified their domains. Those entries include file links and summaries. The full searchable directory remains available through the API; unverified publishers are not enumerated in the full file. Private workspace and admin data are excluded.
 
@@ -250,7 +250,7 @@ These figures measure this index, not all websites. Additions record when a vali
 
 ## MCP server
 
-Connect to `https://agentwebmap.com/mcp` using stateless Streamable HTTP. Basic public reads need no key. Generator, website audit and MCP endpoint checks require a free account credential with `tools:run`; deeper enumeration requires registration. MCP clients can sign in through OAuth with PKCE, or send an integration key in the Authorization header. An HTTP 401 challenge advertises OAuth metadata before any protected batch member executes. Owner tools take the domain-scoped `api_key` as an argument. Discovery metadata: [/.well-known/mcp.json](https://agentwebmap.com/.well-known/mcp.json).
+Connect to `https://agentwebmap.com/mcp` using stateless Streamable HTTP. Basic public reads need no key. Live llms.txt checks, generator, website audit and MCP endpoint checks require a free account credential with `tools:run`; deeper enumeration requires registration. MCP clients can sign in through OAuth with PKCE, or send an integration key in the Authorization header. An HTTP 401 challenge advertises OAuth metadata before any protected batch member executes. Owner tools take the domain-scoped `api_key` as an argument. Discovery metadata: [/.well-known/mcp.json](https://agentwebmap.com/.well-known/mcp.json).
 
 ### Codex
 
@@ -291,7 +291,7 @@ Save in `.vscode/mcp.json`:
 }
 ```
 
-### Available tools (24)
+### Available tools (25)
 
 | Tool | Purpose |
 | --- | --- |
@@ -302,12 +302,13 @@ Save in `.vscode/mcp.json`:
 | `directory_stats` | Directory-wide counts for Agent Web Map: domains tracked, valid llms.txt files, listed, verified, pending. |
 | `list_countries` | List country codes and names with valid listed-site counts, plus the unknown count |
 | `list_categories` | List topic taxonomy and counts by inferred category and agentic label, unclassified sites and publisher-declared MCP endpoints |
-| `search_llms_registry` | Search domains and indexed documentation links by words and meaning |
+| `search_index_preview` | Fast, non-exhaustive stored keyword preview |
+| `search_llms_registry` | Search stored domains and documentation links by words and indexed evidence |
 | `list_domains` | Ranked listing of the directory (verified first, then authority) |
 | `lookup_domain` | Look up a domain: source URLs, summary, authority, ownership verification, inferred country, last check and owner-stated terms |
 | `read_llms_txt` | Return our validated copy of a listed site's llms.txt as text, with its source URL, check date and content hash |
 | `verification_instructions` | Describe optional ownership management and its four proof methods |
-| `check_llms_txt` | Validate a site's llms.txt: reachability, HTML-instead-of-text, redirects to other domains, H1 title, summary, sections, links, link health, llms-full.txt and charset |
+| `check_llms_txt` | Requires tools:run via a registered integration or OAuth |
 | `generate_llms_txt` | Draft an llms.txt from a bounded crawl of a publisher’s public pages, sitemaps and documentation links |
 | `validate_llms_txt` | Check a pasted llms.txt draft in memory |
 | `audit_website` | Requires tools:run via a free integration key or OAuth |
@@ -430,7 +431,7 @@ Set an `agent_terms` object with the owner PATCH endpoint. These owner-stated te
 
 | Endpoint | Action |
 | --- | --- |
-| `GET /v1/check/{domain}` | Live validation with diagnostics and preview; MCP: check_llms_txt |
+| `GET /v1/check/{domain}` | Registered live validation without paid AI; MCP: check_llms_txt |
 | `GET /v1/generate/{domain}` | Draft from homepage, sitemap and page titles; MCP: generate_llms_txt |
 
 The browser [checker](https://agentwebmap.com/check) and [generator](https://agentwebmap.com/generate) use the same operations. Required delivery and format checks determine validity; summaries, sections and optional full files are recommendations. Generation skips failed sampled pages and links to llms-full.txt only when an actual public file was observed. The editor checks, copies and downloads your current text. Review the draft before publishing; neither tool submits your site automatically.
@@ -439,7 +440,7 @@ The browser [checker](https://agentwebmap.com/check) and [generator](https://age
 
 ## Website audits, draft validation and MCP diagnostics
 
-[All free tools](https://agentwebmap.com/tools) work without a sign-in. The same checks are available to agents:
+[All free tools](https://agentwebmap.com/tools) have public information pages. Live scraping runs require a free account, integration credential or MCP OAuth; pasted-text validation needs no sign-in. The same checks are available to agents:
 
 | Endpoint | MCP tool | Purpose |
 | --- | --- | --- |
@@ -488,7 +489,7 @@ Create an [email-confirmed account](https://agentwebmap.com/workspace/signup) wi
 
 Your account includes private saved reports, favorites, collections and named integrations. Run and save reports from the dashboard; up to 100 reports are retained for 90 days. Generated drafts download as Markdown; diagnostics download as JSON. Reports use public observations and do not certify security or guarantee AI citations.
 
-Generator runs, website audits and MCP endpoint diagnostics require registration across website, REST and MCP. The live llms.txt checker, pasted-text validation, basic search and individual publisher lookups stay open. Registered generator allowance is 5 runs per 10 minutes per account; audits and MCP checks each allow 20 per 10 minutes. All of an account's keys share those limits, alongside existing destination, network and service work limits. These are free allowances, not a paid plan.
+Generator runs, website audits and MCP endpoint diagnostics require registration across website, REST and MCP. Pasted-text validation, basic search and individual publisher lookups stay anonymous. Live llms.txt checks require registration. Registered generator allowance is 5 runs per 10 minutes per account; audits and MCP checks each allow 20 per 10 minutes. All of an account's keys share those limits, alongside existing destination, network and service work limits. These are free allowances, not a paid plan. Duplicate live targets share bounded jobs. Dated checker and MCP results may be reused for sixty seconds, audits for two minutes and generated files for ten minutes. Domain-control proof and owner recrawl use their independent fresh checks.
 
 In Integrations & keys, create a named app and up to five active credentials. Choose discovery:read for directory reads and tools:run for registered tools. Choose a 30, 90, 180 or 365-day expiry. Copy the secret once and keep it in your secret manager; only its hash and a masked hint are stored. Rotate immediately or allow a 24-hour overlap while updating your client. Revocation stops access immediately. Signing out of the browser leaves explicitly connected apps active.
 
@@ -500,7 +501,7 @@ Usage is attributed to integrations and credentials, with request counts, return
 
 ## Access, monitoring and errors
 
-Public discovery is free and needs no account or API key. Anonymous result windows cover 250 results per query across website, REST and MCP; free registered accounts and integration keys cover 1,000. Further enumeration needs separately approved bulk permission. Basic search, exact-domain lookup and validation stay anonymous. Daily request/data counters remain observations, not hard daily quotas. High activity creates an operator review alert; it does not automatically deny access. An operator can explicitly block a particular source network or client. A manual block returns `403 access_blocked`.
+Public discovery is free and needs no account or API key. Anonymous result windows cover 250 results per query across website, REST and MCP; free registered accounts and integration keys cover 1,000. Further enumeration needs separately approved bulk permission. Basic search, exact-domain lookup and pasted-text validation stay anonymous and use stored data or local rules only. Live website checks, scraping tools, submissions and ownership-check actions require a registered account or authorized integration. Registration never enables paid AI calls. Daily request/data counters remain observations, not hard daily quotas. High activity creates an operator review alert; it does not automatically deny access. An operator can explicitly block a particular source network or client. A manual block returns `403 access_blocked`.
 
 We record source network addresses, self-reported agent names, operations and returned-record counts for service operations and abuse review. Detailed source activity is retained for 7 days and daily usage for 30 days. Account integration aggregates and request-ID error details are retained for 30 days; dashboard charts show 7 days. IPv6 sources share a /64 identity. Credentials and query text are excluded. These observations describe requests and networks, not verified people.
 
