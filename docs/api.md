@@ -4,7 +4,32 @@ Free basic discovery; registered tools and deeper enumeration. Base URL: https:/
 
 <a id="start"></a>
 
-## Start with a task
+## Quick start
+
+Connect an AI client through MCP, or call the JSON API from an application. Both use the same stored directory.
+
+### Connect an AI client
+
+```text
+https://agentwebmap.com/mcp
+```
+
+Add this hosted Streamable HTTP endpoint to your client. [Open client setup](#mcp) for Claude Code, Cursor, VS Code and Codex.
+
+### Make an API request
+```sh
+curl --get 'https://agentwebmap.com/v1/resolve' \
+  --data-urlencode 'q=modelcontextprotocol authorization' \
+  --data-urlencode 'limit=3'
+```
+Inspect the returned source links and check dates, then read the original publisher pages. [Open the resolve reference](#resolve) for parameters and response fields.
+
+### Access and keys
+Start without a key: 100 distinct publishers per network per UTC day. A free email-confirmed account with an application name and purpose receives 5,000/day, shared across sessions, keys and OAuth connections.
+
+[Create an integration key or connect OAuth](#accounts) for recurring use. [Live website tools](#website-tools) require registered access; managing a listing also requires domain proof. [Read the limits and error guidance](#limits).
+
+### How source discovery works
 
 Agent Web Map is an llms.txt directory, JSON API and hosted MCP server for finding publisher documentation. It returns sources and evidence for your agent to inspect; it does not execute publisher actions or replace reading the original documentation.
 
