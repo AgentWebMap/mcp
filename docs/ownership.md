@@ -4,16 +4,16 @@ Sites can be discovered, crawled and listed without an account, ownership confir
 
 Verification only confirms you can update the website. Your website and domain remain yours. The llms.txt method uses a line beginning `AgentWebMap verification:` followed by the code provided for your check.
 
-Search-engine visibility for an individual publisher profile requires ownership verification and a valid, listed, unblocked listing. Unverified profiles remain usable on the website and through REST/MCP, with search indexing disabled. Eligible verified profiles appear in the sitemap; indexing and ranking are decided by the search engine. Verification does not override quality or visibility rules. [Preview the owner dashboard](https://agentwebmap.com/manage/preview) or [verify your website for free](https://agentwebmap.com/verify?from=github). The preview is illustrative and includes no live publisher data.
+Valid, listed, unblocked verified profiles are eligible for search-engine visibility. Unverified profiles remain available on the website and through REST/MCP with search indexing disabled. Search engines decide which eligible pages to index and rank. Verification confirms domain control and does not override quality or visibility rules. [Preview the owner dashboard](https://agentwebmap.com/manage/preview) or [verify your website for free](https://agentwebmap.com/verify?from=github). The preview is illustrative and includes no live publisher data.
 
 ## Use the browser
 
-1. Open [Manage your listing](https://agentwebmap.com/manage), enter your domain and choose **Start verification**. You can also visit `https://agentwebmap.com/manage/example.com` directly.
+1. [Sign in to a free account](https://agentwebmap.com/workspace/signin) and confirm your email. Open [Manage your listing](https://agentwebmap.com/manage), enter your domain and choose **Start verification**. You can also visit `https://agentwebmap.com/manage/example.com` directly. Starting and completing a new verification require registered access; an account alone does not prove domain control.
 2. Choose one proof method: a DNS TXT record, homepage meta tag, well-known proof file or a plain token line in llms.txt. Copy the provided snippet and publish it on your site or DNS. No backlink is required.
 3. Choose **Verify website** in the same browser. If the change has not appeared yet, the page keeps your selected method and shows its result. Follow that method's guidance and retry after publishing the change. A challenge expires after 30 minutes. Start a new check and publish its new code if the previous one expires.
 4. Save the owner API key shown after success. The browser also signs you into the owner dashboard. The key is displayed once, with copy and download controls.
 
-The dashboard supports profile descriptions, tags, contact information, an owner-declared publisher country, nested llms.txt paths and structured agent terms. It shows current file health, measured website/REST/MCP requests, documentation selections and publisher clicks. Return to review daily discovery activity and the last 30 score snapshots, or request a fresh directory check with **Recheck llms.txt now** (once per 10 minutes).
+The dashboard lets a verified owner edit the agent-facing summary or restore its generated version, manage tags, contact information, an owner-declared publisher country, nested llms.txt paths and structured agent terms. The Overview is taken from the publisher's llms.txt and changes through crawling; it is separate from the editable agent summary. The dashboard shows file health, recorded website/REST/MCP requests, documentation selections and publisher clicks. Return to review daily discovery activity and the last 30 score snapshots, or request a fresh directory check with **Recheck llms.txt now** (once per 10 minutes).
 
 Usage separates web, REST and MCP request volumes, documentation selections and publisher referrals. These are aggregate events, including possible bots, tests and repeated calls. They do not establish unique agents, confirmed publisher-page reads or individual return visits. See [the live owner reference](https://agentwebmap.com/docs#manage) for reporting details. Listing health and activity are reviewed in the dashboard; outbound owner notifications have been retired.
 
@@ -25,14 +25,15 @@ Browser sessions expire after 12 hours. Sign back in with the saved owner API ke
 
 Your workspace can open linked owner dashboards while verification, key and ownership version remain current. Key rotation or ownership recovery invalidates older account bindings; reconnect with the current key or fresh proof. Email access alone never grants control over a domain. Workspace sessions last up to 30 days; owner browser sessions last 12 hours. Workspace sign-out also closes owner sessions in that browser.
 
-Favorites, private collections and the last 50 opened sources remain separate from the public directory and API/MCP data. Public discovery and standalone owner management remain available without a workspace account.
+Favorites, private collections and the last 50 opened sources remain separate from the public directory and API/MCP data. Public discovery starts without an account. Existing owners can still use standalone management with their current owner key; starting a new proof or recovery requires registered access.
 
 ## Use REST or MCP
 
-For REST, start a fresh claim:
+For REST, create an integration key with `tools:run` under [Integrations & keys](https://agentwebmap.com/workspace/integrations), then start a fresh claim. This account credential is separate from the domain-scoped owner key returned after proof succeeds.
 
 ```http
 POST /v1/sites/example.com/claims
+Authorization: Bearer <integration_key>
 Content-Type: application/json
 
 {}
@@ -44,14 +45,15 @@ Complete the claim by sending its credentials in the request body:
 
 ```http
 POST /v1/sites/example.com/verify
+Authorization: Bearer <integration_key>
 Content-Type: application/json
 
 {"claim_id":"<private claim ID>","claim_secret":"<private claim secret>"}
 ```
 
-A successful response returns the owner `api_key` once and consumes the claim. The same claim cannot issue another key. Missing, expired or consumed credentials are rejected; a public proof token alone cannot obtain a key. If proof is not yet visible, a `422` response reports the checked methods so you can fix the proof and retry within the challenge lifetime. The [shell example](../examples/verify-site.sh) keeps private credentials in restricted local files and sends JSON bodies instead of secret-bearing URLs.
+A successful response returns the owner `api_key` once and consumes the claim. The same claim cannot issue another key. Missing, expired or consumed credentials are rejected; a public proof token alone cannot obtain a key. If proof is not yet visible, a `422` response reports the checked methods so you can fix the proof and retry within the challenge lifetime. The [shell example](../examples/verify-site.sh) reads an integration key from `AWM_API_KEY`, keeps private credentials in restricted local files and sends JSON bodies instead of secret-bearing URLs.
 
-For MCP, call `begin_ownership_claim` with `domain`, publish the returned proof and call `verify_domain` with `domain`, `claim_id` and `claim_secret`. Keep private arguments out of public transcripts and logs. Discovery does not require either ownership tool.
+For MCP, connect with an integration key or OAuth grant containing `tools:run`. Call `begin_ownership_claim` with `domain`, publish the returned proof and call `verify_domain` with `domain`, `claim_id` and `claim_secret`. Keep private arguments out of public transcripts and logs. Basic discovery does not require either ownership tool or a domain proof.
 
 Protected owner REST operations use `Authorization: Bearer <api_key>`. MCP owner tools use `domain` and `api_key` arguments. See [api.md](api.md) for profile updates, measured activity, score history and rechecks.
 

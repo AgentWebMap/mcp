@@ -8,7 +8,17 @@ Free basic discovery; registered tools and deeper enumeration. Base URL: https:/
 
 Agent Web Map is an llms.txt directory, JSON API and hosted MCP server for finding publisher documentation. It returns sources and evidence for your agent to inspect; it does not execute publisher actions or replace reading the original documentation.
 
-Try a real lookup on the [homepage](https://agentwebmap.com/#task-discovery) or call the public API. No account or key is needed.
+Try a stored-data lookup on the [homepage](https://agentwebmap.com/#task-discovery) or call the public API within the free anonymous allowance.
+
+
+```sh
+curl --get 'https://agentwebmap.com/v1/resolve' \
+  --data-urlencode 'q=modelcontextprotocol authorization' \
+  --data-urlencode 'limit=3'
+```
+
+
+Anonymous discovery includes 100 distinct publishers per UTC day across the website, API and MCP. A free email-confirmed account with a named application and declared purpose includes 5,000/day, shared across its sessions and credentials. Repeated publishers do not use another publisher. Larger bulk access requires approval. Domain ownership proof is required to manage a listing, not to read the directory. Registered live tools have separate limits; ordinary reads use stored data and never start paid AI work.
 
 1. Send a publisher and task to resolve, for example `modelcontextprotocol authorization`.
 2. Inspect `sources`, `match.strength` and `health.stale`, then read the original publisher pages. The returned excerpts are link metadata, not the full pages.
@@ -16,7 +26,7 @@ Try a real lookup on the [homepage](https://agentwebmap.com/#task-discovery) or 
 
 For repeated use, [connect an MCP client](#mcp) or use HTTP from your existing tools. The optional [discovery skill](https://github.com/AgentWebMap/mcp/tree/main/skills/agentwebmap-docs) describes when to try this workflow and when to fall back. Connection exposes tools to the client; the client decides when to use them. Publishing llms.txt or an MCP manifest does not automatically install a connection or establish persistent use.
 
-For relationships between publishers, [open the point cloud](https://agentwebmap.com/explore) or use [section discovery](#sections). Solid connections count shared file headings; the optional Related meanings overlay adds separately labeled inferred similarities. Voyage embeddings power meaning-based search; AI categorization supplies inferred topics and summaries separately. Neither is needed to extract a heading.
+For relationships between publishers, [open the point cloud](https://agentwebmap.com/explore) or use [section discovery](#sections). Solid connections count shared file headings; the optional Related meanings overlay adds separately labeled inferred similarities. Stored Voyage embeddings support related publishers and semantic heading connections; AI categorization supplies inferred topics and summaries separately. Neither is needed to extract a heading.
 
 The [workspace](#workspace) is optional for people who want saved sources. Domain verification is optional for owners who want listing controls; neither is required for agent discovery.
 
@@ -44,18 +54,6 @@ curl 'https://agentwebmap.com/v1/resolve?q=modelcontextprotocol%20authorization&
 
 Read `best`, `sources`, `match.strength` and `health.stale`, then fetch the linked publisher pages. Source excerpts come from publisher link titles, descriptions and headings; they are not the full text of those pages. Weak matches need a more specific query or broader search. Task lookup uses stored keyword and documentation evidence. It performs no paid query embedding or reranking.
 
-Resolve preserves a named publisher's scope, including curated product and renamed-documentation aliases. It returns `404 no_match` with `best: null` when that publisher has no usable source or no candidate passes the relevance threshold. It does not substitute an unrelated publisher. An invalid exact-domain record can resolve to a valid sibling or known replacement; otherwise it returns no match. Use `GET /v1/domain/{domain}` to inspect an unavailable listing's historical status.
-
-`strong` requires task evidence in the page's title or path as well as supporting metadata and publisher fit. It is a retrieval label, not a correctness probability, endorsement or proof of a working API. Ownership verification does not strengthen a task match. A library named alongside a framework keeps its own publisher scope. Established abbreviations such as RLS are expanded for matching. Equivalent documentation versions share a source slot. A task's documentation sources use a consistent edition even when paths moved between releases: current documentation or the latest indexed stable edition is preferred, unless the query requests a version or comparison. API version resource paths remain distinct.
-
-Returned sources must support the task's distinguishing terms; a shared word such as verification alone is insufficient for a webhook task. Reference documentation precedes equally relevant skill artifacts unless a skill is requested. Ranking uses stored metadata and local rules; no paid reranking is performed. The resolver can return fewer than `limit` sources when additional links lack task evidence.
-
-Explicit router names in `q`, such as App Router or Pages Router, constrain candidates before ranking. Shared documentation remains eligible, but pages explicitly belonging to the opposite router are excluded. Relevant reference pages take priority over KB guides, blogs and changelogs unless those publication types are requested. Only already-indexed reference links participate; a read does not fetch navigation files.
-
-Next.js renamed Middleware to Proxy in v16 ([publisher reference](https://nextjs.org/docs/app/api-reference/file-conventions/proxy)). An unversioned Next.js middleware task uses current Proxy documentation and explains the rename in `match.reason`. Explicit pre-v16 requests retain Middleware documentation; Edge-runtime requests are not rewritten. If an unversioned task returns only one numbered historical edition, that edition is named in `match.reason`. A publisher-specific rename never changes another library's middleware request.
-
-Resolver, search, lookup, explorer and cached-file reads use stored data only. They never call paid AI, fetch publisher pages or enqueue paid enrichment. A missing cached file returns `cached_file_unavailable`; existing copies keep their original timestamps. Repeated resolutions may reuse a worker-local result for 20 seconds. Bounded live scraping requires a free account, integration credential or MCP OAuth; paid AI is prohibited for registered clients too.
-
 | Parameter | Meaning |
 | --- | --- |
 | `q` | Domain, URL or task; required, up to 200 characters |
@@ -68,6 +66,20 @@ Resolver, search, lookup, explorer and cached-file reads use stored data only. T
 `health.stale` marks old root-file checks without hiding valid sources. The default remains 24 hours. A separate maintenance worker revisits listed publishers oldest first, starting after 23 hours. Only a fully received, unchanged, valid root file renews that check date; changes and failures queue a complete crawl. This is bounded maintenance, not a guarantee that every file is less than a day old. Documentation, optional full files and ownership proof have separate crawl dates and checks.
 
 `health.documentation_indexed_at` is the stored documentation-index date; individual `sources[].checked_at` values describe the file containing each excerpt and retain their original stored timestamps. Stale reads never enqueue a refresh. Missing owner terms mean unknown. A topic with no match returns `404`, `error: "no_match"` and `best: null`; discovery does not require registering the missing site.
+
+### How matching and evidence work
+
+Resolve preserves a named publisher's scope, including curated product and renamed-documentation aliases. It returns `404 no_match` with `best: null` when that publisher has no usable source or no candidate passes the relevance threshold. It does not substitute an unrelated publisher. An invalid exact-domain record can resolve to a valid sibling or known replacement; otherwise it returns no match. Use `GET /v1/domain/{domain}` to inspect an unavailable listing's historical status.
+
+`strong` requires task evidence in the page's title or path as well as supporting metadata and publisher fit. It is a retrieval label, not a correctness probability, endorsement or proof of a working API. Ownership verification does not strengthen a task match. A library named alongside a framework keeps its own publisher scope. Established abbreviations such as RLS are expanded for matching. Equivalent documentation versions share a source slot. A task's documentation sources use a consistent edition even when paths moved between releases: current documentation or the latest indexed stable edition is preferred, unless the query requests a version or comparison. API version resource paths remain distinct.
+
+Returned sources must support the task's distinguishing terms; a shared word such as verification alone is insufficient for a webhook task. Reference documentation precedes equally relevant skill artifacts unless a skill is requested. Ranking uses stored metadata and local rules; no paid reranking is performed. The resolver can return fewer than `limit` sources when additional links lack task evidence.
+
+Explicit router names in `q`, such as App Router or Pages Router, constrain candidates before ranking. Shared documentation remains eligible, but pages explicitly belonging to the opposite router are excluded. Relevant reference pages take priority over KB guides, blogs and changelogs unless those publication types are requested. Only already-indexed reference links participate; a read does not fetch navigation files.
+
+Next.js renamed Middleware to Proxy in v16 ([publisher reference](https://nextjs.org/docs/app/api-reference/file-conventions/proxy)). An unversioned Next.js middleware task uses current Proxy documentation and explains the rename in `match.reason`. Explicit pre-v16 requests retain Middleware documentation; Edge-runtime requests are not rewritten. If an unversioned task returns only one numbered historical edition, that edition is named in `match.reason`. A publisher-specific rename never changes another library's middleware request.
+
+Resolver, search, lookup, explorer and cached-file reads use stored data only. They never call paid AI, fetch publisher pages or enqueue paid enrichment. A missing cached file returns `cached_file_unavailable`; existing copies keep their original timestamps. Repeated resolutions may reuse a worker-local result for 20 seconds. Bounded live scraping requires a free account, integration credential or MCP OAuth; paid AI is prohibited for registered clients too.
 
 <a id="search"></a>
 
@@ -91,7 +103,7 @@ curl 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io'
 | `GET /v1/stats` | Directory counts |
 | `GET /v1/map` | Valid sites by country signal |
 
-Search and list accept `page` (default 1), `per_page` (default 10, maximum 100), `verified=true`, `detail` and the filters below. Anonymous enumeration covers the first 250 results of a query; free accounts and integration credentials cover the first 1,000. Refine your query for focused discovery. Further enumeration requires separately approved bulk access. `include_unlisted=true` requires an approved client with that permission. MCP uses `verified_only` for the verified filter. Browse defaults to 250 rows per page and shares the same ranking.
+Search and list accept `page` (default 1), `per_page` (default 10, maximum 100), `verified=true`, `detail` and the filters below. Anonymous enumeration covers the first 250 results of a query; free accounts and integration credentials cover the first 1,000. Refine your query for focused discovery. Further enumeration requires separately approved bulk access. `include_unlisted=true` requires an approved client with that permission. MCP uses `verified_only` for the verified filter. Browse defaults to 20 rows per page and shares the same ranking.
 
 <a id="countries"></a>
 
@@ -258,11 +270,15 @@ Connect to `https://agentwebmap.com/mcp` using stateless Streamable HTTP. Basic 
 codex mcp add agentwebmap --url https://agentwebmap.com/mcp
 ```
 
+[Official Codex setup](https://developers.openai.com/codex/mcp). If your client requests registered access, sign in through its OAuth flow or configure an integration credential using the client's supported secret storage.
+
 ### Claude Code
 
 ```sh
 claude mcp add --transport http agentwebmap https://agentwebmap.com/mcp
 ```
+
+[Official Claude Code setup](https://code.claude.com/docs/en/mcp).
 
 ### Cursor
 Save in `.cursor/mcp.json`:
@@ -277,12 +293,14 @@ Save in `.cursor/mcp.json`:
 }
 ```
 
-### VS Code
-Save in `.vscode/mcp.json`:
+[Official Cursor setup](https://cursor.com/docs/mcp).
+
+### VS Code / Copilot
+Use MCP: Add Server, choose HTTP, and enter the endpoint. Current Copilot setups use the portable configuration below in a supported workspace-root `.mcp.json` or personal MCP configuration. Older editor-managed setups use `.vscode/mcp.json` with a top-level `servers` object instead. Follow the [official configuration guide](https://code.visualstudio.com/docs/agents/reference/mcp-configuration) for your installed client.
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "agentwebmap": {
       "type": "http",
       "url": "https://agentwebmap.com/mcp"
@@ -354,12 +372,12 @@ An owner’s coding agent may complete verification on their behalf when authori
 Publish a public llms.txt, then submit the domain for crawling. Verification is optional.
 
 ```sh
-curl -X POST 'https://agentwebmap.com/v1/sites' -H 'content-type: application/json' -d '{"domain":"example.com"}'
+curl -X POST 'https://agentwebmap.com/v1/sites' -H 'Authorization: Bearer <integration_key>' -H 'content-type: application/json' -d '{"domain":"example.com"}'
 ```
 
-Returns `202` when queued, including a fresh crawl of an existing domain; `200` if no new crawl is queued. Existing valid listings stay visible until a crawl supplies a new result. Requests are coalesced per domain with a ten-minute cooldown; `reason` explains the result and `retry_after` is supplied during cooldown. No account or owner key is required to announce a public update. This does not prove ownership or guarantee listing.
+Returns `202` when queued, including a fresh crawl of an existing domain; `200` if no new crawl is queued. Existing valid listings stay visible until a crawl supplies a new result. Requests are coalesced per domain with a ten-minute cooldown; `reason` explains the result and `retry_after` is supplied during cooldown. Submission requires a free email-confirmed account or an integration credential with tools:run scope. This does not prove ownership or guarantee listing.
 
-Run the same request after a successful deployment to announce a newly published or updated file. Use it in a CI step or post-deploy command, replacing the domain; no secret belongs in this hook. A dependency-free [Node.js 20+ deployment helper](https://agentwebmap.com/assets/notify-deployment.mjs) checks the live file before submitting: download, review, then run `node notify-deployment.mjs example.com`. [Publish from the browser](https://agentwebmap.com/submit) for platform instructions. The [generator](https://agentwebmap.com/generate) leads through review, publishing, live validation, submission and optional verification.
+Run the same request after a successful deployment to announce a newly published or updated file. Use it in a CI step or post-deploy command, replacing the domain. Keep the integration key in a CI secret or environment variable, never in source control. A dependency-free [Node.js 20+ deployment helper](https://agentwebmap.com/assets/notify-deployment.mjs) checks the live file before submitting: download and review it, set `AWM_API_KEY` to an integration key with `tools:run`, then run `node notify-deployment.mjs example.com`. The key is sent only to Agent Web Map, never to the publisher. [Publish from the browser](https://agentwebmap.com/submit) for platform instructions. The [generator](https://agentwebmap.com/generate) leads through review, publishing, live validation, submission and optional verification.
 
 The crawler recognizes publisher-advertised `Link: </docs/llms.txt>; rel="llms-txt"` and `X-Llms-Txt` headers, `/.well-known/llms.txt`, and linked nested indexes under `/_llms/` (including documentation base paths). Recursive collection is limited to eight additional files, three levels and 1 MiB in total, on the same publisher. A source index is reference metadata, not an executable instruction. Root file validation and listing rules still apply.
 
@@ -367,16 +385,16 @@ The crawler recognizes publisher-advertised `Link: </docs/llms.txt>; rel="llms-t
 
 ## Verify domain ownership
 
-Start a fresh claim. This also creates the domain record if needed, so an existing publisher can verify in two API calls with a proof publication between them.
+For a new proof, sign in to a free account or use an integration credential with `tools:run`. An integration key identifies your application; the returned owner key is separate and controls only the proven domain. Start a fresh claim. This also creates the domain record if needed, so an existing publisher can verify in two API calls with a proof publication between them.
 
 ```sh
-curl -X POST 'https://agentwebmap.com/v1/sites/example.com/claims'
+curl -X POST 'https://agentwebmap.com/v1/sites/example.com/claims' -H 'Authorization: Bearer <integration_key>'
 ```
 
 Keep `claim_id` and `claim_secret` private. Publish the returned `verification.token` using one of its snippets: llms.txt, DNS TXT, a homepage meta tag or a well-known file. Then complete the claim:
 
 ```sh
-curl -X POST 'https://agentwebmap.com/v1/sites/example.com/verify' \
+curl -X POST 'https://agentwebmap.com/v1/sites/example.com/verify' -H 'Authorization: Bearer <integration_key>' \
   -H 'content-type: application/json' -d '{"claim_id":"...","claim_secret":"..."}'
 ```
 
@@ -460,7 +478,7 @@ The [website audit](https://agentwebmap.com/audit) separates search and training
 
 Live website checks, generation, audits and endpoint diagnostics share enforced caller, destination and service-wide work limits across the browser, REST and MCP. A limit returns `429` with `retry_after_seconds` and an HTTP `Retry-After` header; wait before retrying. Excluded destinations return `403 outbound_target_blocked`. Redirects to another publisher and custom ports are refused. Cached directory reads remain available when live checks are limited.
 
-The [MCP checker](https://agentwebmap.com/mcp-check) attempts a current stateless tool-list request, then supported legacy initialization when necessary. Agent Web Map’s own MCP server continues to negotiate its published 2025/2024 protocol versions. A successful inventory response does not by itself prove a negotiated version. Authentication and redirects are reported separately. No discovered tools are called, no redirects are followed, and no credentials or schema-reference requests are forwarded. Use a public HTTPS endpoint without query parameters, credentials or a custom port. These diagnostics are not a security certification. Endpoint probes allow 20 checks per network in ten minutes; public directory discovery remains open.
+The [MCP checker](https://agentwebmap.com/mcp-check) attempts a current stateless tool-list request, then supported legacy initialization when necessary. Agent Web Map’s own MCP server continues to negotiate its published 2025/2024 protocol versions. A successful inventory response does not by itself prove a negotiated version. Authentication and redirects are reported separately. No discovered tools are called, no redirects are followed, and no credentials or schema-reference requests are forwarded. Use a public HTTPS endpoint without query parameters, credentials or a custom port. These diagnostics are not a security certification. MCP endpoint checks require registered access and tools:run scope. Registered tool throttles and endpoint-specific probe limits both apply; inspect Retry-After rather than assuming a fixed combined allowance. Public discovery remains available within its own allowance.
 
 On public website pages, [WebMCP](https://agentwebmap.com/webmcp) registers four read-only browser tools when the browser exposes a supported API: `awm_resolve`, `awm_search`, `awm_lookup` and `awm_sections`. Private pages do not register tools; public reads omit account cookies. Browser availability is experimental and client-controlled. WebMCP registration does not automatically install our remote MCP server or establish persistent adoption.
 
@@ -489,25 +507,25 @@ Create an [email-confirmed account](https://agentwebmap.com/workspace/signup) wi
 
 Your account includes private saved reports, favorites, collections and named integrations. Run and save reports from the dashboard; up to 100 reports are retained for 90 days. Generated drafts download as Markdown; diagnostics download as JSON. Reports use public observations and do not certify security or guarantee AI citations.
 
-Generator runs, website audits and MCP endpoint diagnostics require registration across website, REST and MCP. Pasted-text validation, basic search and individual publisher lookups stay anonymous. Live llms.txt checks require registration. Registered generator allowance is 5 runs per 10 minutes per account; audits and MCP checks each allow 20 per 10 minutes. All of an account's keys share those limits, alongside existing destination, network and service work limits. These are free allowances, not a paid plan. Duplicate live targets share bounded jobs. Dated checker and MCP results may be reused for sixty seconds, audits for two minutes and generated files for ten minutes. Domain-control proof and owner recrawl use their independent fresh checks.
+Generator runs, website audits and MCP endpoint diagnostics require registration across website, REST and MCP. Pasted-text validation stays anonymous. Stored search and machine-readable publisher lookups share the free daily discovery allowance; individual public HTML publisher pages remain available. Live llms.txt checks require registration. Registered generator allowance is 5 runs per 10 minutes per account; audits and MCP checks each allow 20 per 10 minutes. All of an account's keys share those limits, alongside existing destination, network and service work limits. These are free allowances, not a paid plan. Duplicate live targets share bounded jobs. Dated checker and MCP results may be reused for sixty seconds, audits for two minutes and generated files for ten minutes. Domain-control proof and owner recrawl use their independent fresh checks.
 
-In Integrations & keys, create a named app and up to five active credentials. Choose discovery:read for directory reads and tools:run for registered tools. Choose a 30, 90, 180 or 365-day expiry. Copy the secret once and keep it in your secret manager; only its hash and a masked hint are stored. Rotate immediately or allow a 24-hour overlap while updating your client. Revocation stops access immediately. Signing out of the browser leaves explicitly connected apps active.
+In Integrations & keys, create an app with a name and intended use, and up to five active credentials. Choose discovery:read for directory reads and tools:run for registered tools. Choose a 30, 90, 180 or 365-day expiry. Copy the secret once and keep it in your secret manager; only its hash and a masked hint are stored. Rotate immediately or allow a 24-hour overlap while updating your client. Revocation stops access immediately. Signing out of the browser leaves explicitly connected apps active.
 
-Send API keys in Authorization: Bearer or X-AgentWebMap-Key headers, never in URLs. MCP OAuth uses public-client authorization code with S256 PKCE, exact callback/resource binding, explicit consent, one-hour access tokens and rotating refresh tokens for a connection lasting up to 90 days. Revoke an OAuth connection from the same dashboard. Browser cookies do not authenticate MCP calls. Resource metadata: [/.well-known/oauth-protected-resource/mcp](https://agentwebmap.com/.well-known/oauth-protected-resource/mcp); authorization server metadata: [/.well-known/oauth-authorization-server](https://agentwebmap.com/.well-known/oauth-authorization-server). Public HTTPS client metadata documents and dynamic client registration are supported.
+Send API keys in Authorization: Bearer or X-AgentWebMap-Key headers, never in URLs. MCP OAuth uses public-client authorization code with S256 PKCE, exact callback/resource binding, explicit consent with your intended use, one-hour access tokens and rotating refresh tokens for a connection lasting up to 90 days. Revoke an OAuth connection from the same dashboard. Browser cookies do not authenticate MCP calls. Resource metadata: [/.well-known/oauth-protected-resource/mcp](https://agentwebmap.com/.well-known/oauth-protected-resource/mcp); authorization server metadata: [/.well-known/oauth-authorization-server](https://agentwebmap.com/.well-known/oauth-authorization-server). Public HTTPS client metadata documents and dynamic client registration are supported.
 
 Usage is attributed to integrations and credentials, with request counts, returned records, payload bytes, response times, operations and recent errors. X-AgentWebMap-Request-Id and MCP result metadata expose support references. It normally appears within 15 seconds. Email confirmation identifies an account, not a person, organization or website owner. It does not grant bulk, unlisted, publisher-owner or administrator permissions. The private operator directory can pause integrations and revoke credentials.
 
 <a id="limits"></a>
 
-## Access, monitoring and errors
+## Access, limits and errors
 
-Public discovery is free and needs no account or API key. Anonymous result windows cover 250 results per query across website, REST and MCP; free registered accounts and integration keys cover 1,000. Further enumeration needs separately approved bulk permission. Basic search, exact-domain lookup and pasted-text validation stay anonymous and use stored data or local rules only. Live website checks, scraping tools, submissions and ownership-check actions require a registered account or authorized integration. Registration never enables paid AI calls. Daily request/data counters remain observations, not hard daily quotas. High activity creates an operator review alert; it does not automatically deny access. An operator can explicitly block a particular source network or client. A manual block returns `403 access_blocked`.
+Public discovery starts with 100 distinct publishers per UTC day per network, shared across website discovery, REST and MCP. A free email-confirmed account with a named application and declared purpose receives 5,000 distinct publishers per UTC day, shared across browser sessions and all its integration keys or OAuth connections. Repeated reads of an already exposed publisher do not consume another publisher. Rotating keys does not reset usage. Anonymous result windows cover 250 results per query across website, REST and MCP; free registered accounts and integration keys cover 1,000. Further enumeration needs separately approved bulk permission. Search and machine-readable exact-domain lookup use the same daily publisher allowance and stored data only. Individual public HTML publisher pages, aggregate statistics, setup instructions and pasted-text validation remain available. Live website checks, scraping tools, submissions and ownership-check actions require a registered account or authorized integration. Registration never enables paid AI calls. Distinct-publisher discovery allowances are enforced before data is returned. Anonymous exhaustion returns 401 registration_required; incomplete account setup returns 403 integration_setup_required; account exhaustion returns 429 discovery_allowance_exceeded with a UTC reset and retry hint. A response larger than the remaining allowance is rejected as a whole: request fewer results. Usage starts when this policy is deployed, without replaying historical traffic. Other request/data counters remain review observations. An operator can explicitly block a particular source network or client. A manual block returns `403 access_blocked`.
 
-We record source network addresses, self-reported agent names, operations and returned-record counts for service operations and abuse review. Detailed source activity is retained for 7 days and daily usage for 30 days. Account integration aggregates and request-ID error details are retained for 30 days; dashboard charts show 7 days. IPv6 sources share a /64 identity. Credentials and query text are excluded. These observations describe requests and networks, not verified people.
+We record source network addresses, self-reported agent names, operations and returned-record counts for service operations and abuse review. Detailed source activity is retained for 7 days and daily usage for 30 days. Current admission state is retained for the current and two preceding UTC dates and pruned in bounded batches. Signed-in request activity includes the account reference for private operator review. Account integration aggregates and request-ID error details are retained for 30 days; dashboard charts show 7 days. IPv6 sources share a /64 identity. Credentials and query text are excluded. These observations describe requests and networks, not verified people.
 
 A self-service integration key identifies an application under your confirmed account. Send `Authorization: Bearer awm_client_…` or `X-AgentWebMap-Key: awm_client_…` on API and MCP requests. Owner keys manage one listing and are separate. Invalid or revoked client keys return `401`; omit the key for public discovery.
 
-Create a free account and name your application in [Integrations & keys](https://agentwebmap.com/workspace/integrations). You can start basic discovery anonymously and connect later; website ownership verification is only needed to manage a listing. Keep keys in client headers, outside public URLs and prompts.
+Create a free account and name your application and describe its intended use in [Integrations & keys](https://agentwebmap.com/workspace/integrations). You can start basic discovery anonymously and connect later; website ownership verification is only needed to manage a listing. Keep keys in client headers, outside public URLs and prompts.
 
 
 ```sh
@@ -522,6 +540,14 @@ curl 'https://agentwebmap.com/v1/domain/agentwebmap.com' -H "Authorization: Bear
 
 Integrations may optionally send `X-AgentWebMap-Client: MyApp/1.0` without an account or key. MCP initialization client names are also recorded when supplied. These names are self-reported and do not grant trust or access. Browser interaction measurement records controlled actions and coarse arrival-source buckets using anonymous sessions that expire after 30 minutes of inactivity; Do Not Track and Global Privacy Control disable it. Interaction detail is retained for 30 days. Raw searches, prompts, full referrer URLs and private collection names are not retained. Demand topics are matched to existing indexed headings or selected categories. Audience, attribution and demand reporting is private to the operator; verified owners can see a separate report limited to their own website.
 
-Responses use `X-AgentWebMap-Access: monitor` and `Cache-Control: private, no-store`. REST and MCP pages contain at most 100 records; website browse offers 50, 100, 250 or 500 within the same result window. MCP accepts at most 10 messages per batch, and oversized requests are rejected before execution. Unlisted enumeration still requires explicit permission, and bulk export remains disabled unless separately enabled for an approved client. Automated collection to reproduce or redistribute the directory requires prior written approval. Publisher content remains subject to its publisher’s terms.
+Responses expose `X-AgentWebMap-Access`, `X-AgentWebMap-Publisher-Limit`, `X-AgentWebMap-Publisher-Remaining` and `X-AgentWebMap-Publisher-Reset` and `Cache-Control: private, no-store`. REST and MCP pages contain at most 100 records; website browse defaults to 20 and offers 20, 50, 100, 250 or 500 within the remaining daily allowance and result window. MCP accepts at most 10 messages per batch, and oversized requests are rejected before execution. Unlisted enumeration still requires explicit permission, and bulk export remains disabled unless separately enabled for an approved client. Automated collection to reproduce or redistribute the directory requires prior written approval. Publisher content remains subject to its publisher’s terms.
 
-Ownership checks, registration and sign-in retain their workflow safeguards. Live source probes are coalesced for a minute per domain; cached directory discovery remains available. Errors are JSON with an `error` code and usually a `hint`. Common statuses: `400` invalid input, `401` missing/bad credentials, `403` manual block or private-data permission required, `404` missing listing or no match, `409` unavailable valid file or changed ownership, `413` oversized request or MCP batch, `422` proof not found, `429` protected workflow throttle, `502` publisher fetch failure. Respect owner terms and the source site’s access rules.
+Ownership checks, registration and sign-in retain their workflow safeguards. Live source probes are coalesced for a minute per domain; cached directory discovery remains available. Errors are JSON with an `error` code and usually a `hint`. Common statuses: `400` invalid input, `401` missing/bad credentials, `403` manual block or private-data permission required, `404` missing listing or no match, `409` unavailable valid file or changed ownership, `413` oversized request or MCP batch, `422` proof not found, `429` account discovery allowance or protected workflow throttle, `502` publisher fetch failure. Respect owner terms and the source site’s access rules.
+
+### Handle limits and temporary failures
+
+Daily publisher allowances and result windows are separate constraints. Request small result sets, reuse cached responses, and follow the returned remaining/reset headers. A free account does not provide unlimited bulk access.
+
+A `401 registration_required` asks you to register or connect a credential; `403 insufficient_scope` requires the right permission, and `403 access_blocked` is a manual access decision. Do not retry those errors repeatedly or evade a block. `429` can mean a quota or workflow throttle. Use its error code, reset information and `Retry-After`.
+
+A `503 temporarily_busy` is a temporary capacity failure, not a successful empty search or proof that the daily allowance is spent. Honor `Retry-After`, use bounded exponential backoff with jitter, and avoid parallel retry storms. Other unavailable/stale-data codes retain their documented meaning; never treat them as a confirmed absence of publisher information.

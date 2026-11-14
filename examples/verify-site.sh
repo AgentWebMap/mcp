@@ -2,6 +2,7 @@
 # Optional ownership flow for a site you control; requires curl and Node.js.
 # Easiest: open https://agentwebmap.com/manage in your browser instead.
 #   sh examples/verify-site.sh example.com
+# Set AWM_API_KEY to an account integration key with tools:run first.
 # Private claim credentials stay in restricted files, never URL parameters.
 set -eu
 umask 077
@@ -22,10 +23,22 @@ work_dir=$(mktemp -d "${TMPDIR:-/tmp}/agentwebmap-owner.XXXXXX")
 claim_file="$work_dir/claim.json"
 request_file="$work_dir/verify-request.json"
 response_file="$work_dir/verify-response.json"
+auth_file="$work_dir/account-header.txt"
+# Keep the account key out of process arguments, output and retained proof files.
+trap 'rm -f "$auth_file"' EXIT
+node --input-type=module - "$auth_file" <<'NODE'
+import fs from 'node:fs';
+const key = process.env.AWM_API_KEY || '';
+if (!key || /\s/.test(key)) {
+  console.error('Set AWM_API_KEY to an integration key with tools:run from https://agentwebmap.com/workspace/integrations. No request was sent.');
+  process.exit(1);
+}
+fs.writeFileSync(process.argv[2], `Authorization: Bearer ${key}\n`, { mode: 0o600, flag: 'wx' });
+NODE
 echo "Starting an optional ownership check for $d. Private working directory: $work_dir"
 curl --silent --show-error --fail-with-body --max-time 60 \
   --request POST "https://agentwebmap.com/v1/sites/$d/claims" \
-  --header 'content-type: application/json' --data '{}' --output "$claim_file"
+  --header "@$auth_file" --header 'content-type: application/json' --data '{}' --output "$claim_file"
 
 node --input-type=module - "$claim_file" "$request_file" <<'NODE'
 import fs from 'node:fs';
@@ -41,7 +54,7 @@ printf '\nAfter publishing the proof, press Enter to check ownership: '
 read -r answer
 if ! curl --silent --show-error --fail-with-body --max-time 120 \
   --request POST "https://agentwebmap.com/v1/sites/$d/verify" \
-  --header 'content-type: application/json' --data-binary "@$request_file" --output "$response_file"; then
+  --header "@$auth_file" --header 'content-type: application/json' --data-binary "@$request_file" --output "$response_file"; then
   echo "Proof is not confirmed. The private response is in $response_file." >&2
   echo 'Inspect its checked methods. Retry the same JSON body before expiry, or start a fresh challenge.' >&2
   exit 1

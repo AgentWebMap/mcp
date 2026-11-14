@@ -70,6 +70,21 @@ Filter by category, country, publisher-declared MCP capability, site type or ind
 
 **[API documentation](https://agentwebmap.com/docs) · [OpenAPI](https://agentwebmap.com/openapi.json) · [Markdown reference](https://agentwebmap.com/docs.md)**
 
+## Developer guides
+
+The documentation now has focused chapters, topic search and copyable examples. Start with one task, then open the reference you need.
+
+| Build or connect | Guide |
+|---|---|
+| Make your first request | [Quick start](https://agentwebmap.com/docs#start) |
+| Connect Claude Code, Cursor, VS Code or Codex | [MCP setup](https://agentwebmap.com/docs#mcp) |
+| Create a scoped application key or use OAuth | [Integration access](https://agentwebmap.com/docs#accounts) |
+| Handle allowances and temporary errors | [Limits and errors](https://agentwebmap.com/docs#limits) |
+| Submit a published file or automate a deployment check | [Submission guide](https://agentwebmap.com/docs#submit) |
+| Verify and manage a website | [Ownership guide](docs/ownership.md) |
+
+The [Markdown API guide](docs/api.md) and [OpenAPI snapshot](openapi.json) are generated from the same reference as the hosted service. The [live reference](https://agentwebmap.com/docs) describes the active release.
+
 <a id="access-and-source-quality"></a>
 
 ## Free access and accounts
