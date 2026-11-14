@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Agent Web Map API",
-    "version": "0.32.3",
+    "version": "0.32.4",
     "description": "Agent Web Map is an llms.txt directory, JSON API and hosted MCP server. AI agents can find publisher documentation by domain or task, inspect source links and file check dates, and explore shared headings. Basic discovery is free without an account or key. Discovery starts with 100 distinct publishers/network/UTC day; a free confirmed account with a named app and purpose receives 5,000/day shared across all keys and browser sessions. Individual public HTML publisher pages remain available. Enumeration windows cover 250 anonymous or 1,000 registered results per query; bulk needs separate approval. Generator, audits and MCP checks require free registration. Distinct-publisher allowances are enforced before output; other usage counters remain observations. Integration identity uses Authorization: Bearer awm_client_… or X-AgentWebMap-Key, separate from owner keys. Responses are private, no-store. See https://agentwebmap.com/docs#limits. Compact fields are the default; detail=full includes owner metadata. Ownership verification proves identity, not documentation correctness. MCP server: https://agentwebmap.com/mcp",
     "contact": {
       "email": "admin@agentwebmap.com"
