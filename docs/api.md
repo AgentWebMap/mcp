@@ -128,7 +128,7 @@ curl 'https://agentwebmap.com/v1/domain/modelcontextprotocol.io'
 | `GET /v1/stats` | Directory counts |
 | `GET /v1/map` | Valid sites by country signal |
 
-Search and list accept `page` (default 1), `per_page` (default 10, maximum 100), `verified=true`, `detail` and the filters below. Anonymous enumeration covers the first 250 results of a query; free accounts and integration credentials cover the first 1,000. Refine your query for focused discovery. Further enumeration requires separately approved bulk access. `include_unlisted=true` requires an approved client with that permission. MCP uses `verified_only` for the verified filter. Browse defaults to 20 rows per page and shares the same ranking.
+Search and list accept `page` (default 1), `per_page` (default 10, maximum 100), `verified=true`, `detail` and the filters below. Anonymous enumeration covers the first 250 results of a query; free accounts and integration credentials cover the first 1,000. Refine your query for focused discovery. Further enumeration requires separately approved bulk access. `include_unlisted=true` requires an approved client with that permission. MCP uses `verified_only` for the verified filter. Browse defaults to 20 rows per page and shares the same ranking. At 20 rows per page, the anonymous result window displays 12 full pages; this is an access limit, not the size of the index. Search and filters cover the full index.
 
 <a id="countries"></a>
 
