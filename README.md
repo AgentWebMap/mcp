@@ -89,7 +89,8 @@ The [Markdown API guide](docs/api.md) and [OpenAPI snapshot](openapi.json) are g
 
 ## Free access and accounts
 
-- **Anonymous discovery:** 100 distinct publishers per network per UTC day, without an account or key.
+- **Public website browsing:** directory, category and publisher HTML pages are open without an account or discovery-page cap.
+- **Anonymous API and MCP discovery:** 100 distinct publishers per network per UTC day, without an account or key.
 - **Free identified access:** 5,000 distinct publishers per UTC day after confirming an account and adding an application name and purpose. Sessions, keys and OAuth connections share the account allowance.
 - **Larger bulk access:** separately approved. Changing a key or application does not reset the allowance.
 - **Public publisher pages:** individual HTML profiles remain available without signing in.
