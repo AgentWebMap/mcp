@@ -78,13 +78,13 @@ Call `read_llms_txt` for its cached orientation file and inspect source URL, che
 
 Inspect `capability_evidence`. A publisher declaration is not an availability, compatibility or authentication test. Read the provider's documentation before connecting. Discovery does not authorize invocation of another service's tools.
 
-## Request a recent source check
+## Inspect recorded freshness
 
 ```json
-{"name":"resolve","arguments":{"query":"cloudflare workers kv","max_age":3600,"refresh":true,"limit":3}}
+{"name":"resolve","arguments":{"query":"cloudflare workers kv","max_age":3600,"limit":3}}
 ```
 
-Inspect `health.ok`, `health.stale` and `health.live_checked`. Refresh checks the public orientation file for the response; it does not verify every linked article or guarantee that the destination API is unchanged.
+Inspect `health.ok`, `health.stale` and `health.live_checked`. This inspects stored freshness and does not trigger a live fetch. Registered clients can use check_llms_txt separately for a live file check. A file check does not verify every linked article.
 
 ## Start from an editorial source list
 

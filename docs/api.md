@@ -33,7 +33,7 @@ Start API or MCP discovery without a key: 100 distinct publishers per network pe
 
 Agent Web Map is an llms.txt directory, JSON API and hosted MCP server for finding publisher documentation. It returns sources and evidence for your agent to inspect; it does not execute publisher actions or replace reading the original documentation.
 
-Try a stored-data lookup on the [homepage](https://agentwebmap.com/#task-discovery) or call the public API within the free anonymous allowance.
+Try a directory search on the [website](https://agentwebmap.com/browse) or call the public API within the free anonymous allowance.
 
 
 ```sh

@@ -7,9 +7,9 @@
 
 [Agent Web Map](https://agentwebmap.com/) helps AI agents find publisher documentation and llms.txt files. Search for a website or task, inspect source links and check dates, and read the original publisher's documentation.
 
-Use the **free JSON API**, connect to the **hosted MCP server**, or browse the same directory on the website. The original interactive **3D index explorer** shows connections between headings found in publisher files.
+Use the **free JSON API**, connect to the **hosted MCP server**, or browse the same directory on the website. The original interactive **3D Connections view** shows connections between headings found in publisher files.
 
-**[Browse the directory](https://agentwebmap.com/browse) · [Explore the index](https://agentwebmap.com/explore) · [Connect an agent](https://agentwebmap.com/docs#start) · [Manage your website](https://agentwebmap.com/manage)**
+**[Browse the directory](https://agentwebmap.com/browse) · [Explore connections](https://agentwebmap.com/explore) · [Connect an agent](https://agentwebmap.com/docs#start) · [Manage your website](https://agentwebmap.com/manage)**
 
 ## What you can do
 
@@ -112,7 +112,7 @@ The Overview comes from the publisher's llms.txt. A verified owner can separatel
 
 The website includes directory list and grid views, light and dark themes, source details, country filters and the original interactive 3D point cloud. A free private workspace adds favorites, collections, saved reports, recently opened sources and integration management.
 
-**[Directory](https://agentwebmap.com/browse) · [3D index explorer](https://agentwebmap.com/explore) · [World map](https://agentwebmap.com/map) · [Workspace](https://agentwebmap.com/workspace) · [Current index statistics](https://agentwebmap.com/stats)**
+**[Directory](https://agentwebmap.com/browse) · [3D Connections view](https://agentwebmap.com/explore) · [Workspace](https://agentwebmap.com/workspace)**
 
 ## About the index
 
